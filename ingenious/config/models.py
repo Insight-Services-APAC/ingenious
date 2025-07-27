@@ -39,6 +39,7 @@ class ModelSettings(BaseModel):
 
     Defines which AI models to use and how to connect to them.
     Supports Azure OpenAI, OpenAI, and other compatible endpoints.
+    Supports both API key and managed identity authentication.
     """
 
     model: str = Field(..., description="Model name (e.g., 'gpt-4', 'gpt-3.5-turbo')")
@@ -47,13 +48,16 @@ class ModelSettings(BaseModel):
         "2023-03-15-preview", description="API version for Azure OpenAI"
     )
     deployment: str = Field("", description="Azure OpenAI deployment name (optional)")
-    api_key: str = Field("", description="API key for the model service")
+    api_key: str = Field("", description="API key for the model service (optional if using managed identity)")
     base_url: str = Field("", description="Base URL for the API endpoint")
+    use_managed_identity: bool = Field(
+        False, description="Use Azure managed identity for authentication instead of API key"
+    )
 
     @field_validator("api_key")
     @classmethod
-    def validate_api_key(cls, v: str) -> str:
-        """Validate that API key is provided for production use."""
+    def validate_api_key(cls, v: str, info) -> str:
+        """Validate that API key is provided when not using managed identity."""
         if v and "placeholder" in v.lower():
             raise ValueError(
                 "API key is required. Set the appropriate environment variable "
@@ -73,6 +77,13 @@ class ModelSettings(BaseModel):
         if v and not v.startswith(("http://", "https://")):
             raise ValueError("Base URL must start with 'http://' or 'https://'")
         return v
+
+    def model_post_init(self, __context) -> None:
+        """Validate that either API key or managed identity is configured."""
+        if not self.use_managed_identity and not self.api_key:
+            raise ValueError(
+                "Either 'api_key' must be provided or 'use_managed_identity' must be True"
+            )
 
 
 class ChatServiceSettings(BaseModel):
@@ -127,12 +138,23 @@ class AzureSearchSettings(BaseModel):
     """Configuration for Azure Cognitive Search integration.
 
     Enables document search and retrieval capabilities.
+    Supports both API key and managed identity authentication.
     Optional - leave empty if not using Azure Search.
     """
 
     service: str = Field("", description="Azure Search service name")
     endpoint: str = Field("", description="Azure Search service endpoint URL")
-    key: str = Field("", description="Azure Search service API key")
+    key: str = Field("", description="Azure Search service API key (optional if using managed identity)")
+    use_managed_identity: bool = Field(
+        False, description="Use Azure managed identity for authentication instead of API key"
+    )
+
+    def model_post_init(self, __context) -> None:
+        """Validate that either API key or managed identity is configured when service is provided."""
+        if self.service and not self.use_managed_identity and not self.key:
+            raise ValueError(
+                "Either 'key' must be provided or 'use_managed_identity' must be True when service is configured"
+            )
 
 
 class AzureSqlSettings(BaseModel):
@@ -147,6 +169,30 @@ class AzureSqlSettings(BaseModel):
     database_connection_string: str = Field(
         "", description="Azure SQL connection string"
     )
+
+
+class AzureCosmosSettings(BaseModel):
+    """Configuration for Azure Cosmos DB integration.
+
+    Enables NoSQL document database operations.
+    Supports both connection string and managed identity authentication.
+    Optional - leave empty if not using Azure Cosmos DB.
+    """
+
+    endpoint: str = Field("", description="Azure Cosmos DB account endpoint URL")
+    key: str = Field("", description="Azure Cosmos DB account key (optional if using managed identity)")
+    database_name: str = Field("", description="Default database name for operations")
+    container_name: str = Field("", description="Default container name for operations")
+    use_managed_identity: bool = Field(
+        False, description="Use Azure managed identity for authentication instead of account key"
+    )
+
+    def model_post_init(self, __context) -> None:
+        """Validate that either account key or managed identity is configured when endpoint is provided."""
+        if self.endpoint and not self.use_managed_identity and not self.key:
+            raise ValueError(
+                "Either 'key' must be provided or 'use_managed_identity' must be True when endpoint is configured"
+            )
 
 
 class WebAuthenticationSettings(BaseModel):

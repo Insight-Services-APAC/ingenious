@@ -1,5 +1,7 @@
 import re
+from typing import Optional
 
+from azure.identity import DefaultAzureCredential
 from openai import NOT_GIVEN, AzureOpenAI, BadRequestError
 from openai.types.chat import (
     ChatCompletionMessage,
@@ -16,11 +18,30 @@ logger = get_logger(__name__)
 
 class OpenAIService:
     def __init__(
-        self, azure_endpoint: str, api_key: str, api_version: str, open_ai_model: str
+        self, 
+        azure_endpoint: str, 
+        api_key: Optional[str], 
+        api_version: str, 
+        open_ai_model: str,
+        use_managed_identity: bool = False
     ):
-        self.client = AzureOpenAI(
-            azure_endpoint=azure_endpoint, api_key=api_key, api_version=api_version
-        )
+        if use_managed_identity:
+            # Use managed identity authentication
+            credential = DefaultAzureCredential()
+            self.client = AzureOpenAI(
+                azure_endpoint=azure_endpoint, 
+                azure_ad_token_provider=lambda: credential.get_token("https://cognitiveservices.azure.com/.default").token,
+                api_version=api_version
+            )
+        else:
+            # Use API key authentication
+            if not api_key:
+                raise ValueError("API key is required when not using managed identity")
+            self.client = AzureOpenAI(
+                azure_endpoint=azure_endpoint, 
+                api_key=api_key, 
+                api_version=api_version
+            )
         self.model = open_ai_model
 
     async def generate_response(

@@ -61,9 +61,10 @@ def get_openai_service() -> OpenAIService:
     model = config.models[0]
     return OpenAIService(
         azure_endpoint=str(model.base_url),
-        api_key=str(model.api_key),
+        api_key=str(model.api_key) if model.api_key else None,
         api_version=str(model.api_version),
         open_ai_model=str(model.model),
+        use_managed_identity=model.use_managed_identity,
     )
 
 

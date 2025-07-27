@@ -83,11 +83,16 @@ class Container(containers.DeclarativeContainer):
         azure_endpoint=providers.Callable(
             lambda cfg: str(cfg.models[0].base_url), config
         ),
-        api_key=providers.Callable(lambda cfg: str(cfg.models[0].api_key), config),
+        api_key=providers.Callable(
+            lambda cfg: str(cfg.models[0].api_key) if cfg.models[0].api_key else None, config
+        ),
         api_version=providers.Callable(
             lambda cfg: str(cfg.models[0].api_version), config
         ),
         open_ai_model=providers.Callable(lambda cfg: str(cfg.models[0].model), config),
+        use_managed_identity=providers.Callable(
+            lambda cfg: cfg.models[0].use_managed_identity, config
+        ),
     )
 
     # Database repository

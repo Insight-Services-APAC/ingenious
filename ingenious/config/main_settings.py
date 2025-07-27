@@ -13,6 +13,7 @@ from pydantic_settings import BaseSettings
 
 from .environment import get_settings_config
 from .models import (
+    AzureCosmosSettings,
     AzureSearchSettings,
     AzureSqlSettings,
     ChatHistorySettings,
@@ -103,6 +104,10 @@ class IngeniousSettings(BaseSettings):
 
     azure_sql_services: Optional[AzureSqlSettings] = Field(
         default=None, description="Azure SQL service configuration (optional)"
+    )
+
+    azure_cosmos_services: Optional[AzureCosmosSettings] = Field(
+        default=None, description="Azure Cosmos DB service configuration (optional)"
     )
 
     @field_validator("models", mode="before")

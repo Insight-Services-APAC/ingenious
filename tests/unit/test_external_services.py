@@ -37,6 +37,81 @@ class TestOpenAIService:
                 azure_endpoint=azure_endpoint, api_key=api_key, api_version=api_version
             )
 
+    def test_init_with_managed_identity(self):
+        """Test OpenAI service initialization with managed identity."""
+        azure_endpoint = "https://test.openai.azure.com/"
+        api_version = "2023-03-15-preview"
+        model = "gpt-4"
+
+        with patch(
+            "ingenious.external_services.openai_service.AzureOpenAI"
+        ) as mock_azure, patch(
+            "ingenious.external_services.openai_service.DefaultAzureCredential"
+        ) as mock_credential:
+            mock_client = Mock()
+            mock_azure.return_value = mock_client
+            mock_cred_instance = Mock()
+            mock_token = Mock()
+            mock_token.token = "test_token"
+            mock_cred_instance.get_token.return_value = mock_token
+            mock_credential.return_value = mock_cred_instance
+
+            service = OpenAIService(
+                azure_endpoint, 
+                None, 
+                api_version, 
+                model, 
+                use_managed_identity=True
+            )
+
+            assert service.client == mock_client
+            assert service.model == "gpt-4"
+            mock_credential.assert_called_once()
+            # Check that azure_ad_token_provider is a callable
+            call_args = mock_azure.call_args
+            assert "azure_ad_token_provider" in call_args.kwargs
+            assert callable(call_args.kwargs["azure_ad_token_provider"])
+
+    def test_init_managed_identity_without_api_key(self):
+        """Test that managed identity works without API key."""
+        azure_endpoint = "https://test.openai.azure.com/"
+        api_version = "2023-03-15-preview"
+        model = "gpt-4"
+
+        with patch(
+            "ingenious.external_services.openai_service.AzureOpenAI"
+        ) as mock_azure, patch(
+            "ingenious.external_services.openai_service.DefaultAzureCredential"
+        ) as mock_credential:
+            mock_client = Mock()
+            mock_azure.return_value = mock_client
+
+            service = OpenAIService(
+                azure_endpoint, 
+                None, 
+                api_version, 
+                model, 
+                use_managed_identity=True
+            )
+
+            assert service.client == mock_client
+            mock_credential.assert_called_once()
+
+    def test_init_without_api_key_or_managed_identity_fails(self):
+        """Test that initialization fails without API key or managed identity."""
+        azure_endpoint = "https://test.openai.azure.com/"
+        api_version = "2023-03-15-preview"
+        model = "gpt-4"
+
+        with pytest.raises(ValueError, match="API key is required when not using managed identity"):
+            OpenAIService(
+                azure_endpoint, 
+                None, 
+                api_version, 
+                model, 
+                use_managed_identity=False
+            )
+
     def test_init_with_openai_config(self):
         """Test OpenAI service initialization - only Azure is supported."""
         azure_endpoint = "https://test.openai.azure.com/"

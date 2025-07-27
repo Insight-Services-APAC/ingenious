@@ -6,6 +6,7 @@ from typing import Dict
 import matplotlib.pyplot as plt  # type: ignore
 import pandas as pd
 from azure.core.credentials import AzureKeyCredential
+from azure.identity import DefaultAzureCredential
 from azure.search.documents import SearchClient
 
 import ingenious.config.config as ingen_config
@@ -35,9 +36,23 @@ if _config.azure_sql_services and _config.azure_sql_services.database_name != "s
 class ToolFunctions:
     @staticmethod
     def aisearch(search_query: str, index_name: str) -> str:
-        credential = AzureKeyCredential(_config.azure_search_services[0].key)
+        if not _config.azure_search_services or not _config.azure_search_services[0].endpoint:
+            raise ValueError("Azure Search service is not configured")
+            
+        search_config = _config.azure_search_services[0]
+        
+        # Choose authentication method based on configuration
+        if search_config.use_managed_identity:
+            credential = DefaultAzureCredential()
+            logger.debug("Using managed identity for Azure Search authentication")
+        else:
+            if not search_config.key:
+                raise ValueError("Azure Search API key is required when not using managed identity")
+            credential = AzureKeyCredential(search_config.key)
+            logger.debug("Using API key for Azure Search authentication")
+            
         client = SearchClient(
-            endpoint=_config.azure_search_services[0].endpoint,
+            endpoint=search_config.endpoint,
             index_name=index_name,
             credential=credential,
         )
