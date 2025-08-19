@@ -209,8 +209,8 @@ class TestJWTAuthentication:
         from ingenious.auth.jwt import SECRET_KEY as TEST_SECRET_KEY
 
         assert TEST_SECRET_KEY == "test-secret-key"
-        assert ACCESS_TOKEN_EXPIRE_MINUTES == 60
-        assert REFRESH_TOKEN_EXPIRE_DAYS == 3
+        assert ACCESS_TOKEN_EXPIRE_MINUTES == 1440
+        assert REFRESH_TOKEN_EXPIRE_DAYS == 7
 
 
 class TestJWTConfiguration:

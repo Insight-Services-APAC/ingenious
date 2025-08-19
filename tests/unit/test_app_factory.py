@@ -100,8 +100,8 @@ class TestFastAgentAPI:
 
         api._setup_middleware()
 
-        # Verify middleware was added
-        assert api.app.add_middleware.call_count == 2
+        # Verify middleware was added (CORS, Context, and Authentication)
+        assert api.app.add_middleware.call_count == 3
 
         # Check that RequestContextMiddleware was added first
         first_call = api.app.add_middleware.call_args_list[0]
@@ -112,6 +112,10 @@ class TestFastAgentAPI:
         args, kwargs = second_call
         assert "CORSMiddleware" in str(args[0])
         assert "http://localhost" in kwargs["allow_origins"]
+
+        # Check that AuthenticationMiddleware was added third
+        third_call = api.app.add_middleware.call_args_list[2]
+        assert "AuthenticationMiddleware" in str(third_call[0][0])
         assert "http://localhost:5173" in kwargs["allow_origins"]
         assert "http://localhost:4173" in kwargs["allow_origins"]
         assert kwargs["allow_credentials"] is True

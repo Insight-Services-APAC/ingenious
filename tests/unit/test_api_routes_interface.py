@@ -8,8 +8,8 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi import APIRouter, FastAPI
 
+from ingenious.config.main_settings import IngeniousSettings
 from ingenious.models.api_routes import IApiRoutes
-from ingenious.models.config import Config
 
 
 class TestIApiRoutes:
@@ -21,17 +21,14 @@ class TestIApiRoutes:
 
     def test_cannot_instantiate_abstract_class(self):
         """Test that IApiRoutes cannot be instantiated directly"""
-        config = Mock(spec=Config)
+        config = Mock(spec=IngeniousSettings)
         app = Mock(spec=FastAPI)
 
         with pytest.raises(TypeError):
             IApiRoutes(config, app)
 
     @patch("ingenious.models.api_routes.get_logger")
-    @patch("ingenious.models.api_routes.get_chat_history_repository")
-    def test_concrete_implementation_initialization(
-        self, mock_get_repo, mock_get_logger
-    ):
+    def test_concrete_implementation_initialization(self, mock_get_logger):
         """Test that a concrete implementation can be initialized properly"""
 
         # Create a concrete implementation for testing
@@ -41,12 +38,10 @@ class TestIApiRoutes:
 
         # Setup mocks
         mock_logger = Mock()
-        mock_repo = Mock()
         mock_get_logger.return_value = mock_logger
-        mock_get_repo.return_value = mock_repo
 
         # Create test objects
-        config = Mock(spec=Config)
+        config = Mock(spec=IngeniousSettings)
         app = Mock(spec=FastAPI)
 
         # Initialize concrete implementation
@@ -56,15 +51,12 @@ class TestIApiRoutes:
         assert concrete_routes.config is config
         assert concrete_routes.app is app
         assert concrete_routes.logger is mock_logger
-        assert concrete_routes.chat_history_repository is mock_repo
 
         # Verify function calls
         mock_get_logger.assert_called_once_with("ingenious.models.api_routes")
-        mock_get_repo.assert_called_once()
 
     @patch("ingenious.models.api_routes.get_logger")
-    @patch("ingenious.models.api_routes.get_chat_history_repository")
-    def test_abstract_method_must_be_implemented(self, mock_get_repo, mock_get_logger):
+    def test_abstract_method_must_be_implemented(self, mock_get_logger):
         """Test that abstract method add_custom_routes must be implemented"""
 
         # Create a concrete implementation that implements the abstract method
@@ -77,7 +69,7 @@ class TestIApiRoutes:
         class ConcreteApiRoutesWithoutMethod(IApiRoutes):
             pass  # Missing add_custom_routes implementation
 
-        config = Mock(spec=Config)
+        config = Mock(spec=IngeniousSettings)
         app = Mock(spec=FastAPI)
 
         # Should work with proper implementation
@@ -90,8 +82,7 @@ class TestIApiRoutes:
             ConcreteApiRoutesWithoutMethod(config, app)
 
     @patch("ingenious.models.api_routes.get_logger")
-    @patch("ingenious.models.api_routes.get_chat_history_repository")
-    def test_add_custom_routes_return_type(self, mock_get_repo, mock_get_logger):
+    def test_add_custom_routes_return_type(self, mock_get_logger):
         """Test that add_custom_routes returns APIRouter"""
 
         class ConcreteApiRoutes(IApiRoutes):
@@ -100,7 +91,7 @@ class TestIApiRoutes:
                 router.get("/test")(lambda: {"message": "test"})
                 return router
 
-        config = Mock(spec=Config)
+        config = Mock(spec=IngeniousSettings)
         app = Mock(spec=FastAPI)
 
         concrete_routes = ConcreteApiRoutes(config, app)
@@ -111,8 +102,7 @@ class TestIApiRoutes:
         assert len(router.routes) > 0
 
     @patch("ingenious.models.api_routes.get_logger")
-    @patch("ingenious.models.api_routes.get_chat_history_repository")
-    def test_multiple_implementations(self, mock_get_repo, mock_get_logger):
+    def test_multiple_implementations(self, mock_get_logger):
         """Test that multiple concrete implementations can be created"""
 
         class ApiRoutesV1(IApiRoutes):
@@ -127,7 +117,7 @@ class TestIApiRoutes:
                 router.get("/v2/test")(lambda: {"version": "v2"})
                 return router
 
-        config = Mock(spec=Config)
+        config = Mock(spec=IngeniousSettings)
         app = Mock(spec=FastAPI)
 
         routes_v1 = ApiRoutesV1(config, app)
@@ -141,8 +131,7 @@ class TestIApiRoutes:
         assert router_v1 is not router_v2
 
     @patch("ingenious.models.api_routes.get_logger")
-    @patch("ingenious.models.api_routes.get_chat_history_repository")
-    def test_docstring_exists(self, mock_get_repo, mock_get_logger):
+    def test_docstring_exists(self, mock_get_logger):
         """Test that the abstract method has proper documentation"""
         # Check that the abstract method has a docstring
         assert IApiRoutes.add_custom_routes.__doc__ is not None
@@ -153,15 +142,14 @@ class TestIApiRoutes:
         assert "returns the router instance" in IApiRoutes.add_custom_routes.__doc__
 
     @patch("ingenious.models.api_routes.get_logger")
-    @patch("ingenious.models.api_routes.get_chat_history_repository")
-    def test_inheritance_chain(self, mock_get_repo, mock_get_logger):
+    def test_inheritance_chain(self, mock_get_logger):
         """Test the inheritance chain and method resolution"""
 
         class ConcreteApiRoutes(IApiRoutes):
             def add_custom_routes(self) -> APIRouter:
                 return APIRouter()
 
-        config = Mock(spec=Config)
+        config = Mock(spec=IngeniousSettings)
         app = Mock(spec=FastAPI)
 
         concrete_routes = ConcreteApiRoutes(config, app)
