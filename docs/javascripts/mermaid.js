@@ -5,11 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
     startOnLoad: true,
     theme: 'default',
     themeVariables: {
-      primaryColor: '#2196F3',
-      primaryTextColor: '#1976D2',
-      primaryBorderColor: '#42A5F5',
-      lineColor: '#757575',
-      secondaryColor: '#f5f5f5',
+      primaryColor: '#AE0A46',
+      primaryTextColor: '#721357',
+      primaryBorderColor: '#D40E8C',
+      lineColor: '#3E332D',
+      secondaryColor: '#F7F6F5',
       tertiaryColor: '#ffffff'
     },
     flowchart: {
