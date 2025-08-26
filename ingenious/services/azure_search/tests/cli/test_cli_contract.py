@@ -38,7 +38,7 @@ def test_cli_semantic_enabled_without_name_exits_1(
         )
 
     # Make the factory blow up; no need to construct a special config since we force the error.
-    monkeypatch.setattr(cli, "build_search_pipeline", raise_value_error, raising=False)  # type: ignore[call-arg]
+    monkeypatch.setattr(cli, "build_search_pipeline", raise_value_error, raising=False)
 
     with pytest.raises(typer.Exit) as ei:
         # NOTE: correct signature is (config, query, verbose)

@@ -54,7 +54,7 @@ class AzureOpenAIClientBuilder(AzureClientBuilder):
             )
 
         # Use Azure AD authentication (import at runtime to keep module light)
-        from azure.identity import get_bearer_token_provider  # type: ignore
+        from azure.identity import get_bearer_token_provider
 
         return AzureOpenAI(
             azure_endpoint=self.model_config.base_url,

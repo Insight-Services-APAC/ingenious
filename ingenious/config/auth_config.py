@@ -152,7 +152,7 @@ class AzureAuthConfig:
             from azure.identity import (
                 ClientSecretCredential as SyncClientSecretCredential,
             )
-            from azure.identity import (  # type: ignore
+            from azure.identity import (
                 DefaultAzureCredential as SyncDefaultAzureCredential,
             )
             from azure.identity import (
@@ -191,7 +191,7 @@ class AzureAuthConfig:
             from azure.identity.aio import (
                 ClientSecretCredential as AioClientSecretCredential,
             )
-            from azure.identity.aio import (  # type: ignore
+            from azure.identity.aio import (
                 DefaultAzureCredential as AioDefaultAzureCredential,
             )
             from azure.identity.aio import (
@@ -236,12 +236,12 @@ class AzureAuthConfig:
                     if loop.is_running():
                         new_loop = asyncio.new_event_loop()
                         try:
-                            return new_loop.run_until_complete(token_or_coro)  # type: ignore[return-value]
+                            return new_loop.run_until_complete(token_or_coro)
                         finally:
                             new_loop.close()
-                    return loop.run_until_complete(token_or_coro)  # type: ignore[return-value]
+                    return loop.run_until_complete(token_or_coro)
                 except RuntimeError:
-                    return asyncio.run(token_or_coro)  # type: ignore[return-value]
-            return token_or_coro  # type: ignore[return-value]
+                    return asyncio.run(token_or_coro)
+            return token_or_coro
 
         return _sync_provider

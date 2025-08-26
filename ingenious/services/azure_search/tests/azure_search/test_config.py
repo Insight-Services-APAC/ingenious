@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest  # type: ignore[import-untyped]
+import pytest
 from pydantic import SecretStr, ValidationError
 
 from ingenious.services.azure_search.config import DEFAULT_DAT_PROMPT, SearchConfig

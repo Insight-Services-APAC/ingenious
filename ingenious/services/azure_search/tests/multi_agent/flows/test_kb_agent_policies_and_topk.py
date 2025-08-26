@@ -45,7 +45,7 @@ def _make_flow(tmp_path: Any) -> Any:
         A ConversationFlow with config and KB/chroma paths set.
     """
     kb_mod = importlib.import_module(_KB_MOD_PATH)
-    flow = object.__new__(kb_mod.ConversationFlow)  # type: ignore[call-arg]
+    flow = object.__new__(kb_mod.ConversationFlow)
 
     config = SimpleNamespace(
         models=[SimpleNamespace(model="gpt-4o")],
@@ -60,11 +60,11 @@ def _make_flow(tmp_path: Any) -> Any:
         knowledge_base_policy=None,
     )
 
-    flow._config = config  # type: ignore[attr-defined]
-    flow._chat_service = None  # type: ignore[attr-defined]
-    flow._kb_path = str(tmp_path / "kb")  # type: ignore[attr-defined]
-    flow._chroma_path = str(tmp_path / "chroma")  # type: ignore[attr-defined]
-    flow._last_mem_warn_ts = 0.0  # type: ignore[attr-defined]
+    flow._config = config
+    flow._chat_service = None
+    flow._kb_path = str(tmp_path / "kb")
+    flow._chroma_path = str(tmp_path / "chroma")
+    flow._last_mem_warn_ts = 0.0
     return flow
 
 
@@ -148,7 +148,7 @@ async def test_prefer_azure_no_fallback_returns_no_info_when_empty(
             return_value=_StubModelClient(),
         ),
     ):
-        text: str = await flow._search_knowledge_base(  # type: ignore[attr-defined]
+        text: str = await flow._search_knowledge_base(
             search_query="When is X?",
             use_azure_search=True,
             top_k=3,
@@ -204,12 +204,12 @@ async def test_coerced_mode_direct_ignores_env_but_honors_request_topk(
 
         req = ChatRequest(user_prompt="State the Azure summary.")
         if hasattr(req, "parameters") and isinstance(req.parameters, dict):
-            req.parameters["kb_top_k"] = 5  # type: ignore[index]
+            req.parameters["kb_top_k"] = 5
         else:
             setattr(req, "parameters", {"kb_top_k": 5})
 
         # Call the public non-streaming entry point (direct mode).
-        _ = await flow.get_conversation_response(req)  # type: ignore[arg-type]
+        _ = await flow.get_conversation_response(req)
 
     # Verify provider captured the request-level top_k=5 (not env 99).
     assert _SpyProviderCapture.calls, "Expected the provider to be called once."

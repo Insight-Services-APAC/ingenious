@@ -1,67 +1,16 @@
----
-title: "Conversation Patterns"
-layout: single
-permalink: /extensions/conversation-patterns/
-sidebar:
-  nav: "docs"
-toc: true
-toc_label: "Pattern Guide"
-toc_icon: "comments"
----
+# Conversation Patterns
 
-This guide covers creating custom conversation patterns for multi-agent coordination in Insight Ingenious.
+Design custom multi-agent conversation flows for complex workflows.
 
-## Pattern Structure
+## Overview
 
-1. Create a new pattern module in `ingenious/services/chat_services/multi_agent/conversation_patterns/your_pattern_name/`
-2. Implement the `ConversationPattern` class following the interface
-3. Create a corresponding flow in `ingenious/services/chat_services/multi_agent/conversation_flows/your_pattern_name/`
+Conversation patterns define how multiple agents interact to handle complex tasks through coordinated workflows.
 
-### Pattern Implementation Example
+## Pattern Types
 
-```python
-# conversation_patterns/your_pattern_name/your_pattern_name.py
-from typing import Any, Dict, List, Tuple
-import autogen
-from ingenious.core.structured_logging import get_logger
+- **Sequential**: Agents execute in order
+- **Parallel**: Agents execute simultaneously
+- **Conditional**: Agents execute based on conditions
+- **Hierarchical**: Nested agent workflows
 
-logger = get_logger(__name__)
-
-class ConversationPattern:
-    def __init__(
-        self,
-        default_llm_config: Dict[str, Any],
-        topics: List[str],
-        memory_record_switch: bool,
-        memory_path: str,
-        thread_memory: str,
-    ) -> None:
-        self.default_llm_config = default_llm_config
-        self.topics = topics
-        self.memory_record_switch = memory_record_switch
-        self.memory_path = memory_path
-        self.thread_memory = thread_memory
-
-        # Initialize agents
-        self.user_proxy = autogen.UserProxyAgent(
-            name="user_proxy",
-            human_input_mode="NEVER",
-            system_message="I represent the user's request",
-            code_execution_config=False,
-        )
-
-        self.your_agent = autogen.AssistantAgent(
-            name="your_agent",
-            system_message="Your agent's system message",
-            llm_config=self.default_llm_config
-        )
-
-    async def get_conversation_response(self, input_message: str) -> Tuple[str, str]:
-        # Set up agent interactions
-        result = await self.user_proxy.a_initiate_chat(
-            self.your_agent,
-            message=input_message
-        )
-
-        return result.summary, ""
-```
+For detailed implementation, see the [Extension Development Guide](../development.md#extending-ingenious).

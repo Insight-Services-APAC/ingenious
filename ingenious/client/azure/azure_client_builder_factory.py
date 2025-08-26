@@ -48,16 +48,11 @@ HAS_COSMOS: bool = _has_module("azure.cosmos")
 # Patchable builder symbols (initialized to None; tests can patch these directly).
 # --------------------------------------------------------------------------------------
 
-AzureOpenAIClientBuilder = None  # type: ignore[assignment]
-AzureOpenAIChatCompletionClientBuilder = None  # type: ignore[assignment]
-BlobServiceClientBuilder = None  # type: ignore[assignment]
-BlobClientBuilder = None  # type: ignore[assignment]
-AzureSearchClientBuilder = None  # type: ignore[assignment]
-AzureSqlClientBuilder = None  # type: ignore[assignment]
-AzureSqlClientBuilderWithAuth = None  # type: ignore[assignment]
-AzureSearchAsyncClientBuilder = None  # type: ignore[assignment]
-AsyncAzureOpenAIClientBuilder = None  # type: ignore[assignment]
-
+AzureOpenAIClientBuilder = NoneAzureOpenAIChatCompletionClientBuilder = (
+    NoneBlobServiceClientBuilder
+) = NoneBlobClientBuilder = NoneAzureSearchClientBuilder = NoneAzureSqlClientBuilder = (
+    NoneAzureSqlClientBuilderWithAuth
+) = NoneAzureSearchAsyncClientBuilder = NoneAsyncAzureOpenAIClientBuilder = None
 __all__ = [
     "AzureClientFactory",
     "HAS_COSMOS",
@@ -121,7 +116,7 @@ class AzureClientFactory:
             "AzureOpenAIClientBuilder",
             "openai is required to create an Azure OpenAI client",
         )
-        builder = builder_cls(model_config)  # type: ignore[misc, call-arg]
+        builder = builder_cls(model_config)
         return builder.build()
 
     @staticmethod
@@ -155,7 +150,7 @@ class AzureClientFactory:
             client_secret=(client_secret or ""),
             tenant_id=(tenant_id or ""),
         )
-        builder = builder_cls(model_settings)  # type: ignore[misc, call-arg]
+        builder = builder_cls(model_settings)
         return builder.build()
 
     # ----------- OpenAI Chat Completions client (sync, optional) -----------
@@ -170,7 +165,7 @@ class AzureClientFactory:
             "AzureOpenAIChatCompletionClientBuilder",
             "autogen-ext is required to create the chat client",
         )
-        builder = builder_cls(model_config)  # type: ignore[misc, call-arg]
+        builder = builder_cls(model_config)
         return builder.build()
 
     @staticmethod
@@ -203,7 +198,7 @@ class AzureClientFactory:
             client_secret=(client_secret or ""),
             tenant_id=(tenant_id or ""),
         )
-        builder = builder_cls(model_settings)  # type: ignore[misc, call-arg]
+        builder = builder_cls(model_settings)
         return builder.build()
 
     # --------------------------- Blob (sync) ---------------------------
@@ -218,7 +213,7 @@ class AzureClientFactory:
             "BlobServiceClientBuilder",
             "azure-storage-blob is required to create blob clients",
         )
-        builder = builder_cls(file_storage_config)  # type: ignore[misc, call-arg]
+        builder = builder_cls(file_storage_config)
         return builder.build()
 
     @staticmethod
@@ -245,7 +240,7 @@ class AzureClientFactory:
             token=(token or ""),
             authentication_method=authentication_method,
         )
-        builder = builder_cls(file_storage_settings)  # type: ignore[misc, call-arg]
+        builder = builder_cls(file_storage_settings)
         return builder.build()
 
     @staticmethod
@@ -260,7 +255,7 @@ class AzureClientFactory:
             "BlobClientBuilder",
             "azure-storage-blob is required to create blob clients",
         )
-        builder = builder_cls(file_storage_config, container_name, blob_name)  # type: ignore[misc, call-arg]
+        builder = builder_cls(file_storage_config, container_name, blob_name)
         return builder.build()
 
     @staticmethod
@@ -289,7 +284,7 @@ class AzureClientFactory:
             token=(token or ""),
             authentication_method=authentication_method,
         )
-        builder = builder_cls(file_storage_settings, container_name, blob_name)  # type: ignore[misc, call-arg]
+        builder = builder_cls(file_storage_settings, container_name, blob_name)
         return builder.build()
 
     # --------------------------- Cosmos (sync, optional) ---------------------------
@@ -325,7 +320,7 @@ class AzureClientFactory:
             "AzureSearchClientBuilder",
             "azure-search-documents is required",
         )
-        builder = builder_cls(search_config, index_name)  # type: ignore[misc, call-arg]
+        builder = builder_cls(search_config, index_name)
         return builder.build()
 
     @staticmethod
@@ -356,7 +351,7 @@ class AzureClientFactory:
             tenant_id=(tenant_id or ""),
             authentication_method=authentication_method,
         )
-        builder = builder_cls(search_settings, index_name)  # type: ignore[misc, call-arg]
+        builder = builder_cls(search_settings, index_name)
         return builder.build()
 
     # --------------------------- SQL (sync) ---------------------------
@@ -371,7 +366,7 @@ class AzureClientFactory:
             "AzureSqlClientBuilder",
             "pyodbc is required to create Azure SQL client",
         )
-        builder = builder_cls(sql_config)  # type: ignore[misc, call-arg]
+        builder = builder_cls(sql_config)
         return builder.build()
 
     @staticmethod
@@ -391,7 +386,7 @@ class AzureClientFactory:
             table_name=(table_name or ""),
             database_connection_string=connection_string,
         )
-        builder = builder_cls(sql_settings)  # type: ignore[misc, call-arg]
+        builder = builder_cls(sql_settings)
         return builder.build()
 
     @staticmethod
@@ -411,7 +406,7 @@ class AzureClientFactory:
             "AzureSqlClientBuilderWithAuth",
             "pyodbc is required to create Azure SQL client",
         )
-        builder = builder_cls(  # type: ignore[misc, call-arg]
+        builder = builder_cls(
             server=server,
             database=database,
             authentication_method=authentication_method,
@@ -461,7 +456,7 @@ class AzureClientFactory:
             "AzureSearchAsyncClientBuilder",
             "azure-search-documents is required to create async search client",
         )
-        builder = builder_cls.from_config(  # type: ignore[misc, call-arg]
+        builder = builder_cls.from_config(
             config, index_name=index_name, client_options=client_options
         )
         return builder.build()
@@ -478,7 +473,7 @@ class AzureClientFactory:
             "AsyncAzureOpenAIClientBuilder",
             "openai is required to create an async Azure OpenAI client",
         )
-        builder = builder_cls.from_config(  # type: ignore[misc, call-arg]
+        builder = builder_cls.from_config(
             config, api_version=api_version, client_options=client_options
         )
         return builder.build()

@@ -36,7 +36,7 @@ except ImportError:  # pragma: no cover - fall back to model-level validation if
 if not USING_BUILDER:
     # Adjust this import if your config model lives elsewhere:
     from ingenious.services.azure_search.config import (
-        SearchConfig,  # type: ignore[import-not-found]
+        SearchConfig,
     )
 
 

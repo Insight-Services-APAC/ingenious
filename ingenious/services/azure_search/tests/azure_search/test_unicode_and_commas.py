@@ -108,8 +108,8 @@ async def test_retriever_unicode_query_ok(
 
     retriever = AzureSearchRetriever(
         config,
-        search_client=search_client,  # type: ignore[arg-type]
-        embedding_client=embedding_client,  # type: ignore[arg-type]
+        search_client=search_client,
+        embedding_client=embedding_client,
     )
 
     # Lexical path: mock the search client to return two documents

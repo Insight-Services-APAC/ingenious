@@ -111,8 +111,8 @@ async def test_retry_on_429_then_success() -> None:
     # to inject our mock client for this unit test.
     r = AzureSearchRetriever(
         config=cfg,
-        search_client=client,  # type: ignore[arg-type]
-        embedding_client=DummyEmbeddingsClient(),  # type: ignore[arg-type]
+        search_client=client,
+        embedding_client=DummyEmbeddingsClient(),
     )
 
     # NOTE: search_lexical only takes (query), top_k is read from config

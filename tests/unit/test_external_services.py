@@ -113,7 +113,7 @@ class TestOpenAIService:
             side_effect=Exception("invalid configuration"),
         ):
             with pytest.raises(Exception, match="invalid configuration"):
-                OpenAIService(None, None, None, None)  # type: ignore[arg-type]
+                OpenAIService(None, None, None, None)
 
     # ------------------- behavior / error tests (DI) -------------------
 
@@ -188,7 +188,7 @@ class TestOpenAIService:
         }
         err = BadRequestError("Content filter error", response=Mock(), body=token_body)
         # set code for our handler
-        err.code = "content_filter"  # type: ignore[attr-defined]
+        err.code = "content_filter"
 
         client, _ = _make_client(side_effect=err)
         service = OpenAIService(

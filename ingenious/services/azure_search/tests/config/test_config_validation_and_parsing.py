@@ -172,7 +172,7 @@ def test_ingenioussettings_parse_models_from_nested_env_dict() -> None:
             "base_url": "https://oai.example.com",
         },
     }
-    s = IngeniousSettings(models=models_dict)  # type: ignore[arg-type]
+    s = IngeniousSettings(models=models_dict)
     assert len(s.models) == 2
     # Keys are sorted; "0" should come before "1"
     assert s.models[0].model == "text-embedding-3-small"
@@ -205,7 +205,7 @@ def test_ingenioussettings_parse_azure_search_from_nested_env_dict() -> None:
             "top_k_retrieval": 15,
         }
     }
-    s = IngeniousSettings(models=models_dict, azure_search_services=azure_dict)  # type: ignore[arg-type]
+    s = IngeniousSettings(models=models_dict, azure_search_services=azure_dict)
     assert s.azure_search_services is not None
     assert len(s.azure_search_services) == 1
     az0 = s.azure_search_services[0]

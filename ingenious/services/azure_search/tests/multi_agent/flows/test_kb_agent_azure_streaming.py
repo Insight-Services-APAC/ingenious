@@ -47,7 +47,7 @@ def _make_flow(tmp_path: Any) -> Any:
         A ConversationFlow instance with `_config`, `_kb_path`, `_chroma_path`.
     """
     kb_mod = importlib.import_module(_KB_MOD_PATH)
-    flow = object.__new__(kb_mod.ConversationFlow)  # type: ignore[call-arg]
+    flow = object.__new__(kb_mod.ConversationFlow)
 
     # Minimal config expected by ConversationFlow.
     config = SimpleNamespace(
@@ -63,11 +63,11 @@ def _make_flow(tmp_path: Any) -> Any:
         knowledge_base_policy=None,
     )
 
-    flow._config = config  # type: ignore[attr-defined]
-    flow._chat_service = None  # type: ignore[attr-defined]
-    flow._kb_path = str(tmp_path / "kb")  # type: ignore[attr-defined]
-    flow._chroma_path = str(tmp_path / "chroma")  # type: ignore[attr-defined]
-    flow._last_mem_warn_ts = 0.0  # type: ignore[attr-defined]
+    flow._config = config
+    flow._chat_service = None
+    flow._kb_path = str(tmp_path / "kb")
+    flow._chroma_path = str(tmp_path / "chroma")
+    flow._last_mem_warn_ts = 0.0
     return flow
 
 
@@ -130,7 +130,7 @@ class _StubAssistantAgent:
         yield SimpleNamespace(event="tool_call")
 
         # 2) Call the registered search tool; its return is the assistant content.
-        res: str = await self._tools[0].fn("dummy")  # type: ignore[call-arg]
+        res: str = await self._tools[0].fn("dummy")
 
         # 3) Narrated tool JSON that must be filtered by the KB agent.
         yield SimpleNamespace(content='{"function_call": {"name": "search_tool"}}')
@@ -220,7 +220,7 @@ async def test_streaming_assist_calls_provider_and_honors_request_topk(
 
         req = ChatRequest(user_prompt="What is X?")
         if hasattr(req, "parameters") and isinstance(req.parameters, dict):
-            req.parameters["kb_top_k"] = 7  # type: ignore[index]
+            req.parameters["kb_top_k"] = 7
         else:
             setattr(req, "parameters", {"kb_top_k": 7})
 
@@ -282,7 +282,7 @@ async def test_streaming_filters_tool_chatter_and_surfaces_final_content(
 
         req = ChatRequest(user_prompt="How to foo?")
         if hasattr(req, "parameters") and isinstance(req.parameters, dict):
-            req.parameters["kb_top_k"] = 3  # type: ignore[index]
+            req.parameters["kb_top_k"] = 3
 
         chunks: list[Any] = []
         async for ch in flow.get_streaming_conversation_response(req):

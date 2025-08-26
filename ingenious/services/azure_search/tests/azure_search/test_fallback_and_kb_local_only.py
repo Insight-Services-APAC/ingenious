@@ -102,7 +102,7 @@ async def test_kb_policy_local_only_missing_dir_message(
         pass
 
     # The `mm` module is dynamically patched, confusing mypy.
-    import ingenious.services.memory_manager as mm  # type: ignore[import-untyped]
+    import ingenious.services.memory_manager as mm
 
     monkeypatch.setattr(
         mm,

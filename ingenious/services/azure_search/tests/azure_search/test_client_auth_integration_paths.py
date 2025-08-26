@@ -42,7 +42,7 @@ class _AsyncIter:
 class _DummyAsyncSearchClient:
     """Dummy async Azure Search client yielded by factory."""
 
-    async def search(self, *args: Any, **kwargs: Any) -> _AsyncIter:  # type: ignore[override]
+    async def search(self, *args: Any, **kwargs: Any) -> _AsyncIter:
         """Return a short async iterator with one document result."""
         return _AsyncIter([{"id": "1", "content": "x", "@search.score": 1.0}])
 

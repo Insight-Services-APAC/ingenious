@@ -21,7 +21,7 @@ from pydantic import SecretStr
 
 if TYPE_CHECKING:
     # pytest may not ship type stubs in all environments; used for annotations only.
-    from _pytest.monkeypatch import MonkeyPatch  # type: ignore[import-untyped]
+    from _pytest.monkeypatch import MonkeyPatch
 
 
 def _reload(module_name: str) -> types.ModuleType:

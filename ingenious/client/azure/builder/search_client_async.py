@@ -143,7 +143,7 @@ class AzureSearchAsyncClientBuilder:
 
         cred: Union[AsyncTokenCredential, AzureKeyCredential, None] = None
         if tenant_id and client_id and client_secret:
-            from azure.identity.aio import ClientSecretCredential  # type: ignore
+            from azure.identity.aio import ClientSecretCredential
 
             cred = ClientSecretCredential(
                 tenant_id=str(tenant_id),
@@ -151,12 +151,12 @@ class AzureSearchAsyncClientBuilder:
                 client_secret=str(client_secret),
             )
         elif msi_client_id:
-            from azure.identity.aio import ManagedIdentityCredential  # type: ignore
+            from azure.identity.aio import ManagedIdentityCredential
 
             cred = ManagedIdentityCredential(client_id=str(msi_client_id))
         elif prefer_token_flag or not key:
             try:
-                from azure.identity.aio import DefaultAzureCredential  # type: ignore
+                from azure.identity.aio import DefaultAzureCredential
             except Exception as e:  # pragma: no cover
                 if not key:
                     raise ImportError(
@@ -171,7 +171,7 @@ class AzureSearchAsyncClientBuilder:
             cred = AzureKeyCredential(str(key))
 
         if cred is None:
-            from azure.identity.aio import DefaultAzureCredential  # type: ignore
+            from azure.identity.aio import DefaultAzureCredential
 
             cred = DefaultAzureCredential(exclude_interactive_browser_credential=True)
 
@@ -188,6 +188,6 @@ class AzureSearchAsyncClientBuilder:
         return AsyncSearchClient(
             endpoint=self._endpoint,
             index_name=self._index_name,
-            credential=self._credential,  # type: ignore[arg-type]
+            credential=self._credential,
             **filtered_opts,
         )
