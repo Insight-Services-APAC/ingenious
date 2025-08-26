@@ -1,9 +1,28 @@
-/* Custom styles for Ingenious documentation */
+/* Custom styles for Insight Ingenious documentation */
 
 :root {
-  --md-primary-fg-color: #2196F3;
-  --md-primary-fg-color--light: #42A5F5;
-  --md-primary-fg-color--dark: #1976D2;
+  /* Insight brand colors */
+  --md-primary-fg-color: #AE0A46; /* Shiraz - Insight's primary red */
+  --md-primary-fg-color--light: #D40E8C; /* Lighter pink variant */
+  --md-primary-fg-color--dark: #721357; /* Darker burgundy variant */
+  --md-accent-fg-color: #3E332D; /* Taupe - Insight's brand brown */
+  --md-default-bg-color: #F7F6F5; /* Desert Storm - Insight's light background */
+  --md-default-fg-color: #222222; /* Mine Shaft - Insight's dark text color */
+}
+
+/* Custom color scheme for Insight branding */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #AE0A46;
+  --md-primary-fg-color--light: #D40E8C;
+  --md-primary-fg-color--dark: #721357;
+  --md-accent-fg-color: #3E332D;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #D40E8C;
+  --md-primary-fg-color--light: #AE0A46;
+  --md-primary-fg-color--dark: #721357;
+  --md-accent-fg-color: #F7F6F5;
 }
 
 /* Custom grid cards styling */
