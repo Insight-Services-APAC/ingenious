@@ -57,7 +57,7 @@ class AzureOpenAIChatCompletionClientBuilder(AzureClientBuilder):
             )
 
         # Use Azure AD authentication (import at runtime to keep module light)
-        from azure.identity import get_bearer_token_provider  # type: ignore
+        from azure.identity import get_bearer_token_provider
 
         return AzureOpenAIChatCompletionClient(
             model=self.model_config.model or self.model_config.deployment,

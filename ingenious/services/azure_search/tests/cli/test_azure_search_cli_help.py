@@ -35,7 +35,7 @@ def _collect_cli_debug() -> str:
     lines.append(f"sys.executable={sys.executable}")
     lines.append(f"sys.path[:5]={sys.path[:5]}")
     try:
-        import click  # type: ignore[import-untyped]
+        import click
         import typer
 
         lines.append(
@@ -47,7 +47,7 @@ def _collect_cli_debug() -> str:
     # Root app introspection
     lines.append("\n=== ROOT APP INTROSPECTION ===")
     try:
-        from ingenious.cli import main as main_mod  # type: ignore[import-untyped]
+        from ingenious.cli import main as main_mod
 
         lines.append(
             f"ingenious.cli.main file={inspect.getsourcefile(main_mod) or inspect.getfile(main_mod)}"
@@ -75,7 +75,7 @@ def _collect_cli_debug() -> str:
     lines.append("\n=== AZURE-SEARCH SUBAPP INTROSPECTION ===")
     try:
         from ingenious.services.azure_search import (
-            cli as az_cli,  # type: ignore[import-untyped]
+            cli as az_cli,
         )
 
         az_file: str = inspect.getsourcefile(az_cli) or inspect.getfile(az_cli)
@@ -99,7 +99,7 @@ def _collect_cli_debug() -> str:
     # Registry introspection (best effort; field names may differ)
     lines.append("\n=== REGISTRY INTROSPECTION ===")
     try:
-        from ingenious.cli import registry as reg_mod  # type: ignore[import-untyped]
+        from ingenious.cli import registry as reg_mod
 
         reg_file: str = inspect.getsourcefile(reg_mod) or inspect.getfile(reg_mod)
         lines.append(f"registry module file={reg_file}")
@@ -131,7 +131,7 @@ def _collect_cli_debug() -> str:
     # Help outputs
     lines.append("\n=== HELP OUTPUTS ===")
     try:
-        from ingenious.cli.main import app  # type: ignore[import-untyped]
+        from ingenious.cli.main import app
 
         r: Result = CliRunner().invoke(app, ["--help"])
         lines.append("--- root --help ---")
@@ -141,7 +141,7 @@ def _collect_cli_debug() -> str:
         lines.append(f"root help invoke error: {e!r}")
 
     try:
-        from ingenious.cli.main import app  # type: ignore[import-untyped]
+        from ingenious.cli.main import app
 
         r = CliRunner().invoke(app, ["azure-search", "run", "--help"])
         lines.append("--- azure-search run --help ---")
@@ -159,7 +159,7 @@ def test_root_help_shows_azure_search() -> None:
     This test ensures that the azure-search subcommand is correctly registered
     with the main Typer application and is therefore discoverable by users.
     """
-    from ingenious.cli.main import app  # type: ignore[import-untyped]
+    from ingenious.cli.main import app
 
     runner = CliRunner()
     result: Result = runner.invoke(app, ["--help"])
@@ -182,7 +182,7 @@ def test_azure_search_has_run_help() -> None:
     defined and exposed in the help text, ensuring users know what options
     are available.
     """
-    from ingenious.cli.main import app  # type: ignore[import-untyped]
+    from ingenious.cli.main import app
 
     runner = CliRunner()
     result: Result = runner.invoke(app, ["azure-search", "run", "--help"])

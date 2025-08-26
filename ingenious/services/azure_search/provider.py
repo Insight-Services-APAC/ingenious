@@ -31,7 +31,7 @@ from ingenious.services.retrieval.errors import GenerationDisabledError
 try:  # Some tests patch this symbol on the provider module
     from azure.search.documents.models import QueryType  # noqa: F401
 except Exception:  # pragma: no cover - tests may stub this anyway
-    QueryType = object()  # type: ignore[misc,assignment]
+    QueryType = object()
 
 if TYPE_CHECKING:
     from ingenious.config import IngeniousSettings
@@ -127,9 +127,9 @@ class AzureSearchProvider:
         # ---- Common params for raw client searches ------------------------------
         params: Dict[str, Any] = {"search_text": query, "top": limit}
         try:
-            from azure.search.documents.models import QueryType as _QT  # type: ignore
+            from azure.search.documents.models import QueryType as _QT
         except Exception:
-            _QT = None  # type: ignore[assignment]
+            _QT = None
         if _QT is not None and getattr(_QT, "SIMPLE", None) is not None:
             params["query_type"] = getattr(_QT, "SIMPLE")
 
@@ -189,7 +189,7 @@ class AzureSearchProvider:
                         sk = sk or "sk"
 
                     if ep and sk and idx:
-                        temp_client = factory.create_async_search_client(  # type: ignore[attr-defined]
+                        temp_client = factory.create_async_search_client(
                             index_name=idx,
                             config={"endpoint": ep, "search_key": sk},
                         )
@@ -353,7 +353,7 @@ class AzureSearchProvider:
             raise GenerationDisabledError(
                 "answer() requires enable_answer_generation=True. "
                 "Construct SearchConfig(..., enable_answer_generation=True).",
-                snapshot=snap,  # type: ignore[call-arg]
+                snapshot=snap,
             )
 
         if not query or not query.strip():
@@ -365,8 +365,8 @@ class AzureSearchProvider:
 
         # Keep back-compat with older call-sites that use get_answer()
         if hasattr(self._pipeline, "get_answer"):
-            return await self._pipeline.get_answer(query)  # type: ignore[no-any-return]
-        return await self._pipeline.answer(query)  # type: ignore[no-any-return]
+            return await self._pipeline.get_answer(query)
+        return await self._pipeline.answer(query)
 
     async def close(self) -> None:
         """

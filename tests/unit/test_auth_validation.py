@@ -220,5 +220,5 @@ def test_validation_scenarios():
 
 
 if __name__ == "__main__":
-    test_authentication_requirements()
-    test_validation_scenarios()
+    test_authentication_requirements()  # type: ignore[no-untyped-call]
+    test_validation_scenarios()  # type: ignore[no-untyped-call]

@@ -1,0 +1,148 @@
+site_name: "Insight Ingenious Documentation"
+site_description: >-
+  Comprehensive documentation for Insight Ingenious - A powerful conversation workflow framework for building AI-powered applications with Azure OpenAI.
+site_url: "https://insight-services-apac.github.io/ingenious/"
+site_author: "Insight Services APAC"
+repo_url: "https://github.com/Insight-Services-APAC/ingenious"
+repo_name: "Insight-Services-APAC/ingenious"
+edit_uri: edit/main/docs/
+# Theme configuration
+theme:
+  name: material
+  language: en
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.prune
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - toc.follow
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - content.code.select
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+# Documentation directory
+docs_dir: docs
+# Navigation structure
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - User Guides:
+      - guides/index.md
+      - Complete Azure Deployment: guides/complete-azure-deployment.md
+      - Data & Document Preparation: guides/data-document-preparation.md
+      - Document Processing: guides/document-processing.md
+      - Document Chunking: guides/document-chunking.md
+  - Extensions:
+      - extensions/index.md
+      - Custom Agents: extensions/custom-agents.md
+      - Conversation Patterns: extensions/conversation-patterns.md
+      - Custom Templates: extensions/custom-templates.md
+      - Flow Implementation: extensions/flow-implementation.md
+  - Architecture: architecture.md
+  - Development: development.md
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+# Markdown extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: Insight-Services-APAC
+      repo: ingenious
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+# Extra CSS and JavaScript
+extra_css:
+  - stylesheets/extra.css
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js
+  - javascripts/mathjax.js
+  - javascripts/mermaid.js
+# Extra configuration
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Insight-Services-APAC
+      name: Insight Services APAC on GitHub
+  generator: false
+# Copyright
+copyright: Copyright &copy; 2024 Insight Services APAC

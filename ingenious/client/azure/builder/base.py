@@ -24,18 +24,18 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 # AzureKeyCredential is lightweight; still guard it to be safe
 try:
     from azure.core.credentials import (
-        AzureKeyCredential,  # type: ignore[missing-import]
+        AzureKeyCredential,
     )
 except Exception:  # pragma: no cover - fallback for environments w/o azure-core
 
-    class AzureKeyCredential:  # type: ignore[no-redef]
+    class AzureKeyCredential:
         def __init__(self, key: str) -> None:
             self.key = key
 
 
 # TokenCredential / identity types: type-only to avoid hard dependency at import time
 if TYPE_CHECKING:
-    from azure.core.credentials import TokenCredential  # type: ignore[missing-import]
+    from azure.core.credentials import TokenCredential
 
     # Identity types are imported only for static typing; runtime imports are lazy.
 else:
@@ -92,7 +92,7 @@ class AzureClientBuilder(ABC):
             # Lazy runtime import of identity classes only when needed.
             def _import_identity():
                 try:
-                    from azure.identity import (  # type: ignore
+                    from azure.identity import (
                         ClientSecretCredential,
                         DefaultAzureCredential,
                         ManagedIdentityCredential,
@@ -231,7 +231,7 @@ class AzureClientBuilder(ABC):
         if not hasattr(cred, "get_token"):
             raise ValueError(f"Expected TokenCredential-like object, got {type(cred)}")
 
-        return cred  # type: ignore[return-value]
+        return cred
 
     @abstractmethod
     def build(self) -> Any:

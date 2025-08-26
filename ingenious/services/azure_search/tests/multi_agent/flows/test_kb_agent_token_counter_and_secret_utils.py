@@ -43,15 +43,14 @@ async def test_safe_count_tokens_returns_zero_on_failure(
         """A dummy function that always raises an error."""
         raise RuntimeError("fail")
 
-    tc.num_tokens_from_messages = _boom  # type: ignore[assignment]
+    tc.num_tokens_from_messages = _boom
     monkeypatch.setitem(sys.modules, "ingenious.utils.token_counter", tc)
 
     # The class is instantiated without calling __init__ to isolate this method.
     flow: kb.ConversationFlow = kb.ConversationFlow.__new__(kb.ConversationFlow)
-    flow._config = SimpleNamespace(models=[SimpleNamespace(model="gpt-4o")])  # type: ignore[attr-defined]
-    flow._chat_service = None  # type: ignore[attr-defined]
-    flow._memory_path = str(tmp_path)  # type: ignore[attr-defined]
-
+    flow._config = SimpleNamespace(models=[SimpleNamespace(model="gpt-4o")])
+    flow._chat_service = None
+    flow._memory_path = str(tmp_path)
     total, comp = await flow._safe_count_tokens("s", "u", "a", "gpt-4o")
     assert (total, comp) == (0, 0)
 
@@ -67,9 +66,9 @@ def test_unwrap_secret_and_mask_secret_variants(tmp_path: Path) -> None:
     """
     # The class is instantiated without calling __init__ to isolate methods.
     flow: kb.ConversationFlow = kb.ConversationFlow.__new__(kb.ConversationFlow)
-    flow._config = SimpleNamespace(models=[SimpleNamespace(model="gpt-4o")])  # type: ignore[attr-defined]
-    flow._chat_service = None  # type: ignore[attr-defined]
-    flow._memory_path = str(tmp_path)  # type: ignore[attr-defined]
+    flow._config = SimpleNamespace(models=[SimpleNamespace(model="gpt-4o")])
+    flow._chat_service = None
+    flow._memory_path = str(tmp_path)
 
     class SecretObj:
         """A mock secret object with a value-retrieving method."""

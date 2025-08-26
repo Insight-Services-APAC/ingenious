@@ -155,7 +155,7 @@ async def test_generate_exception(
     # Ensure awaited call is awaitable
     monkeypatch.setattr(
         generator._llm_client.chat.completions, "create", boom, raising=True
-    )  # type: ignore[attr-defined]
+    )
 
     with pytest.raises(RuntimeError):
         await generator.generate("q", [{config.content_field: "x"}])

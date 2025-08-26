@@ -51,7 +51,7 @@ async def get_custom_workflow_agents(custom_workflow_name: str) -> Dict[str, Any
         class AgentVisitor(ast.NodeVisitor):
             """A dedicated AST visitor to find Agent calls within a specific method."""
 
-            def visit_Call(self, node: ast.Call):
+            def visit_Call(self, node: ast.Call) -> None:
                 if isinstance(node.func, ast.Name) and node.func.id == "Agent":
                     agent_data = {}
                     for keyword in node.keywords:
@@ -91,7 +91,7 @@ async def get_custom_workflow_agents(custom_workflow_name: str) -> Dict[str, Any
                 "agent_type",
             }
             agents_list = [
-                {key: data.get(key) for key in required_fields}
+                {key: data.get(key) or "" for key in required_fields}
                 for data in extracted_agents
             ]
 

@@ -46,7 +46,7 @@ def test_async_search_builder_api_key_path() -> None:
     builder_mod: ModuleType = _reload(
         "ingenious.client.azure.builder.search_client_async"
     )
-    AzureSearchAsyncClientBuilder = builder_mod.AzureSearchAsyncClientBuilder  # type: ignore[attr-defined]
+    AzureSearchAsyncClientBuilder = builder_mod.AzureSearchAsyncClientBuilder
 
     cfg: dict[str, str] = {
         "search_endpoint": "https://example.search.windows.net",
@@ -56,7 +56,7 @@ def test_async_search_builder_api_key_path() -> None:
     client = b.build()
 
     from azure.core.credentials import (
-        AzureKeyCredential,  # type: ignore[import-untyped]  # stubbed
+        AzureKeyCredential,  # stubbed
     )
 
     assert client.endpoint == "https://example.search.windows.net"
@@ -69,7 +69,7 @@ def test_async_search_builder_prefers_token_over_key() -> None:
     builder_mod: ModuleType = _reload(
         "ingenious.client.azure.builder.search_client_async"
     )
-    AzureSearchAsyncClientBuilder = builder_mod.AzureSearchAsyncClientBuilder  # type: ignore[attr-defined]
+    AzureSearchAsyncClientBuilder = builder_mod.AzureSearchAsyncClientBuilder
 
     # Provide BOTH SP credentials and a key; must prefer TokenCredential (AAD)
     cfg: dict[str, str] = {
@@ -85,7 +85,7 @@ def test_async_search_builder_prefers_token_over_key() -> None:
     client = b.build()
 
     from azure.identity.aio import (
-        ClientSecretCredential,  # type: ignore[import-untyped]  # stubbed
+        ClientSecretCredential,  # stubbed
     )
 
     assert isinstance(client.credential, ClientSecretCredential)
@@ -97,7 +97,7 @@ def test_async_search_builder_service_fallback_builds_endpoint() -> None:
     builder_mod: ModuleType = _reload(
         "ingenious.client.azure.builder.search_client_async"
     )
-    AzureSearchAsyncClientBuilder = builder_mod.AzureSearchAsyncClientBuilder  # type: ignore[attr-defined]
+    AzureSearchAsyncClientBuilder = builder_mod.AzureSearchAsyncClientBuilder
 
     cfg: dict[str, str] = {"service": "mysearchacct", "search_key": "S_KEY"}
     b = AzureSearchAsyncClientBuilder.from_config(cfg, index_name="idx")
@@ -112,7 +112,7 @@ def test_async_openai_builder_api_key_path() -> None:
     builder_mod: ModuleType = _reload(
         "ingenious.client.azure.builder.openai_client_async"
     )
-    AsyncAzureOpenAIClientBuilder = builder_mod.AsyncAzureOpenAIClientBuilder  # type: ignore[attr-defined]
+    AsyncAzureOpenAIClientBuilder = builder_mod.AsyncAzureOpenAIClientBuilder
 
     cfg: dict[str, str] = {
         "openai_endpoint": "https://example.openai.azure.com",
@@ -133,7 +133,7 @@ def test_async_openai_builder_aad_path() -> None:
     builder_mod: ModuleType = _reload(
         "ingenious.client.azure.builder.openai_client_async"
     )
-    AsyncAzureOpenAIClientBuilder = builder_mod.AsyncAzureOpenAIClientBuilder  # type: ignore[attr-defined]
+    AsyncAzureOpenAIClientBuilder = builder_mod.AsyncAzureOpenAIClientBuilder
 
     cfg: dict[str, str] = {
         "openai_endpoint": "https://example.openai.azure.com"
@@ -151,7 +151,7 @@ def test_async_openai_builder_aad_path() -> None:
 def test_factory_async_methods_select_and_forward() -> None:
     """Verify factory creates clients and forwards options correctly."""
     fac_mod: ModuleType = _reload("ingenious.client.azure.azure_client_builder_factory")
-    AzureClientFactory = fac_mod.AzureClientFactory  # type: ignore[attr-defined]
+    AzureClientFactory = fac_mod.AzureClientFactory
 
     # Search client (key path)
     cfg_search: dict[str, str] = {
@@ -177,7 +177,7 @@ def test_factory_async_methods_select_and_forward() -> None:
 async def test_create_async_search_client_prefers_token() -> None:
     """Ensure factory prefers AAD token when both token and key are present."""
     fac_mod: ModuleType = _reload("ingenious.client.azure.azure_client_builder_factory")
-    AzureClientFactory = fac_mod.AzureClientFactory  # type: ignore[attr-defined]
+    AzureClientFactory = fac_mod.AzureClientFactory
 
     cfg: dict[str, str] = {
         "search_endpoint": "https://example.search.windows.net",
@@ -189,7 +189,7 @@ async def test_create_async_search_client_prefers_token() -> None:
     client = AzureClientFactory.create_async_search_client(index_name="idx", config=cfg)
 
     from azure.identity.aio import (
-        ClientSecretCredential,  # type: ignore[import-untyped]
+        ClientSecretCredential,
     )
 
     assert isinstance(client.credential, ClientSecretCredential)

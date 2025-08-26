@@ -64,7 +64,7 @@ def test_cli_missing_semantic_name_exits_1() -> None:
     # specific configuration error and provides a clear message to the user before
     # exiting with a non-zero status code.
     # Import root app only after the CLI tree has registered subcommands
-    from ingenious.cli.main import app  # type: ignore[import-untyped]
+    from ingenious.cli.main import app
 
     # The validation is now handled by the CLI directly.
     # We invoke the CLI explicitly excluding the semantic config.
@@ -89,11 +89,11 @@ def test_cli_verbose_sets_component_loggers() -> None:
     # confirms that passing the --verbose flag correctly cascades the DEBUG
     # log level to all relevant sub-component loggers, aiding in debugging.
     # The actual pipeline execution is patched to isolate the logging setup logic.
-    from ingenious.cli.main import app  # type: ignore[import-untyped]
+    from ingenious.cli.main import app
 
     # Bring the CLI module in to access its __name__ for the logger list
     from ingenious.services.azure_search import (
-        cli as az_cli,  # type: ignore[import-untyped]
+        cli as az_cli,
     )
 
     # These are the logger names the CLI configures in setup_logging(verbose)

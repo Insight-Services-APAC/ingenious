@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
-import pytest  # type: ignore[import-untyped]
+import pytest
 from typer.testing import CliRunner
 
 if TYPE_CHECKING:

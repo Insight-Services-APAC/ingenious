@@ -1,0 +1,60 @@
+/* Custom styles for Ingenious documentation */
+
+:root {
+  --md-primary-fg-color: #2196F3;
+  --md-primary-fg-color--light: #42A5F5;
+  --md-primary-fg-color--dark: #1976D2;
+}
+
+/* Custom grid cards styling */
+.grid.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.grid.cards > * {
+  padding: 1.5rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.grid.cards > *:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--md-primary-fg-color--light);
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+  text-align: center;
+  margin: 1em 0;
+}
+
+/* Code block enhancements */
+.highlight .filename {
+  background: var(--md-code-bg-color);
+  color: var(--md-code-fg-color);
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem 0.25rem 0 0;
+  font-size: 0.8rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-bottom: none;
+}
+
+/* Admonition customizations */
+.md-typeset .admonition.tip {
+  border-left-color: #00BCD4;
+}
+
+.md-typeset .admonition.tip > .admonition-title {
+  background-color: rgba(0, 188, 212, 0.1);
+  border-left-color: #00BCD4;
+}
+
+/* Navigation enhancements */
+.md-nav__item--active > .md-nav__link {
+  color: var(--md-primary-fg-color);
+  font-weight: 500;
+}

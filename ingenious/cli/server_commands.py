@@ -11,7 +11,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ingenious.config.models import IngeniousSettings
+    from ingenious.config.main_settings import IngeniousSettings
 import pkgutil
 from pathlib import Path
 from sysconfig import get_paths
@@ -34,8 +34,9 @@ load_dotenv()
 logger = get_logger(__name__)
 
 
-def make_app(config: IngeniousSettings):
+def make_app(config: "IngeniousSettings") -> "FastAPI":
     # keep the import late so your env var ordering still works
+
     from ingenious.main import create_app
 
     return create_app(config)

@@ -583,8 +583,8 @@ async def test_azure_provider_retrieve_cleans_and_reranks__awaitable_smoke(
         "retrieve",
         AsyncMock(return_value=[{"id": "1", "content": "x"}]),
         raising=True,
-    )  # type: ignore[arg-type]
-    res = await prov.retrieve("q")  # type: ignore[func-returns-value]
+    )
+    res = await prov.retrieve("q")
     assert res and res[0]["id"] == "1"
 
 
@@ -598,8 +598,8 @@ async def test_azure_provider_rerank_fallback_when_ids_missing(
     prov = object.__new__(AzureSearchProvider)
     monkeypatch.setattr(
         prov, "retrieve", AsyncMock(return_value=[{"content": "x"}]), raising=True
-    )  # type: ignore[arg-type]
-    res = await prov.retrieve("q")  # type: ignore[func-returns-value]
+    )
+    res = await prov.retrieve("q")
     assert res and "content" in res[0]
 
 

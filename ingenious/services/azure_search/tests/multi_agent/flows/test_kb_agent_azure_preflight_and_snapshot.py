@@ -273,7 +273,7 @@ def test_require_valid_index_not_configured_incomplete_sdk_missing_preflight_fai
 
     with pytest.raises(PreflightError) as ei1:
         # This is a sync call in the original code, testing a sync path.
-        flow._require_valid_azure_index(logger)  # type: ignore[misc]
+        flow._require_valid_azure_index(logger)
     assert ei1.value.reason == "not_configured"
 
 

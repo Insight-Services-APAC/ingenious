@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 # ⬇️ Adjust this import to your project layout if needed
 # The target module may not have type stubs, hence the ignore.
-PipelineMod = pytest.importorskip("ingenious.services.azure_search.pipeline")  # type: ignore[import-untyped]
+PipelineMod = pytest.importorskip("ingenious.services.azure_search.pipeline")
 AdvancedSearchPipeline = PipelineMod.AdvancedSearchPipeline
 
 

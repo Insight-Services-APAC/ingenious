@@ -63,8 +63,8 @@ async def test_retriever_lexical_retries_on_429_via_sdk_policy(
     # Create retriever with our custom clients
     r = AzureSearchRetriever(
         config,
-        search_client=DummySearchClient(),  # type: ignore[arg-type]
-        embedding_client=DummyEmbeddingClient(),  # type: ignore[arg-type]
+        search_client=DummySearchClient(),
+        embedding_client=DummyEmbeddingClient(),
     )
 
     # The client the retriever uses should expose the retry_policy (SDK-level backoff)
@@ -107,8 +107,8 @@ async def test_retrieval_handles_unicode_query(
     # Create retriever with mocked clients
     retriever = AzureSearchRetriever(
         config,
-        search_client=mock_search_client,  # type: ignore[arg-type]
-        embedding_client=mock_embedding_client,  # type: ignore[arg-type]
+        search_client=mock_search_client,
+        embedding_client=mock_embedding_client,
     )
 
     # Lexical: just ensure call succeeds and was awaited

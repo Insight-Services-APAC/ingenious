@@ -89,7 +89,7 @@ def test_pick_models_first_match_deterministic() -> None:
     # Accept either tuple or object return shapes
     if isinstance(picked, tuple):
         # Mypy cannot handle unpacking a tuple of unknown size from `Any`.
-        *_, emb_dep, gen_dep = picked  # type: ignore[misc]
+        *_, emb_dep, gen_dep = picked
     else:
         emb_dep = getattr(picked, "embedding_deployment", None)
         gen_dep = getattr(picked, "generation_deployment", None)

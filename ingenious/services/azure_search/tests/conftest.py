@@ -475,7 +475,7 @@ def _ensure_pkg(name: str) -> types.ModuleType:
         return importlib.import_module(name)
     mod = types.ModuleType(name)
     # Mark as a namespace package (PEP 420-like)
-    mod.__path__ = []  # type: ignore[attr-defined]
+    mod.__path__ = []
     sys.modules[name] = mod
     return mod
 
