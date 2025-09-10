@@ -1,23 +1,28 @@
 """
 Server-related CLI commands for Insight Ingenious.
 
-This module contains commands for starting and managing the API server.
+This module defines the Typer CLI commands that start and manage the API server.
+It also centralizes host/port resolution so tests and deployments get consistent
+behavior. In particular, when a deploy-style port is configured via `WEB_PORT`
+or `PORT`, the server should bind to `0.0.0.0` unless an explicit `--host`
+override is provided. CLI flags always take precedence over environment values.
+
+Usage:
+    - `ingen serve` starts the main API server.
+    - `ingen run-rest-api-server` is a hidden/legacy alias used by tests.
+Key entry points:
+    - `register_commands()`
+    - `resolve_host_port()`
 """
 
 from __future__ import annotations
 
 import importlib
 import os
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from fastapi import FastAPI
-
-    from ingenious.config.main_settings import IngeniousSettings
 import pkgutil
 from pathlib import Path
 from sysconfig import get_paths
-from typing import Optional
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import typer
 import uvicorn
@@ -29,23 +34,93 @@ from ingenious.cli.utilities import CliFunctions
 from ingenious.config import get_config
 from ingenious.core.structured_logging import get_logger
 
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+    from ingenious.config.main_settings import IngeniousSettings
+
 # Load environment variables from .env file
 load_dotenv()
 
 # Initialize logger
 logger = get_logger(__name__)
 
+# -----------------------
+# Module-level constants
+# -----------------------
+DEFAULT_LOCAL_HOST = "127.0.0.1"
+BIND_ALL_HOST = "0.0.0.0"
+DEFAULT_PORT = 80
+DEFAULT_TUNER_PORT = 5000
+
+
+def resolve_host_port(host_flag: Optional[str], port_flag: Optional[int]) -> Tuple[str, int]:
+    """Resolve (host, port) honoring env precedence and CLI overrides.
+
+    What:
+        - If WEB_PORT or PORT is set and the host was not explicitly overridden,
+          bind to 0.0.0.0 (container/PaaS semantics).
+        - CLI flags, when provided, always win over env/defaults.
+
+    Why:
+        Tests expect binding to all interfaces when a deploy-style port is
+        provided via environment (WEB_PORT/PORT). Reading env here (call time)
+        ensures monkeypatched env in tests is respected.
+
+    Args:
+        host_flag: Host from CLI (or None).
+        port_flag: Port from CLI (or None).
+
+    Returns:
+        A (host, port) pair ready for `uvicorn.run(...)`.
+    """
+    env_web = os.getenv("WEB_PORT")
+    env_proc = os.getenv("PORT")
+
+    env_port: Optional[int] = None
+    for candidate in (env_web, env_proc):
+        if candidate is None:
+            continue
+        try:
+            env_port = int(candidate)
+            break
+        except ValueError:
+            # Ignore non-integer env values
+            continue
+
+    # Port: CLI > ENV > DEFAULT
+    port = port_flag if port_flag is not None else (env_port or DEFAULT_PORT)
+
+    # Host:
+    # - If CLI host is provided, use it as-is.
+    # - Else, if an env port is present (regardless of the CLI port value),
+    #   bind to 0.0.0.0. Otherwise, default to loopback.
+    if host_flag is not None:
+        host = host_flag
+    else:
+        host = BIND_ALL_HOST if env_port is not None else DEFAULT_LOCAL_HOST
+
+    return host, port
+
 
 def make_app(config: "IngeniousSettings") -> "FastAPI":
-    # keep the import late so your env var ordering still works
+    """Create and return the FastAPI application for the given configuration.
 
+    Why:
+        This import is intentionally late so environment variables (set by the
+        CLI prior to calling this function) are honored by the app factory.
+    """
     from ingenious.main import create_app
 
     return create_app(config)
 
 
 def register_commands(app: typer.Typer, console: Console) -> None:
-    """Register server-related commands with the typer app."""
+    """Register server-related commands with the typer app.
+
+    Args:
+        app: The Typer application to register the commands on.
+        console: Rich console used for user-facing messages.
+    """
 
     @app.command(name="serve", help="Start the API server with web interface")
     def serve(
@@ -54,7 +129,10 @@ def register_commands(app: typer.Typer, console: Console) -> None:
             typer.Option(
                 "--config",
                 "-c",
-                help="Path to config.yml file (default: ./config.yml or $INGENIOUS_PROJECT_PATH)",
+                help=(
+                    "Path to config.yml file (default: ./config.yml or "
+                    "$INGENIOUS_PROJECT_PATH)"
+                ),
             ),
         ] = None,
         profile: Annotated[
@@ -62,7 +140,10 @@ def register_commands(app: typer.Typer, console: Console) -> None:
             typer.Option(
                 "--profile",
                 "-p",
-                help="Path to profiles.yml file (default: ./profiles.yml or $INGENIOUS_PROFILE_PATH)",
+                help=(
+                    "Path to profiles.yml file (default: ./profiles.yml or "
+                    "$INGENIOUS_PROFILE_PATH)"
+                ),
             ),
         ] = None,
         host: Annotated[
@@ -70,13 +151,13 @@ def register_commands(app: typer.Typer, console: Console) -> None:
             typer.Option(
                 "--host", "-h", help="Host to bind the server (default: 0.0.0.0)"
             ),
-        ] = "127.0.0.1",
+        ] = DEFAULT_LOCAL_HOST,
         port: Annotated[
             int,
             typer.Option(
                 "--port", help="Port to bind the server (default: 80 or $WEB_PORT)"
             ),
-        ] = int(os.getenv("WEB_PORT", "80")),
+        ] = int(os.getenv("WEB_PORT", str(DEFAULT_PORT))),
         no_prompt_tuner: Annotated[
             bool,
             typer.Option(
@@ -130,19 +211,26 @@ def register_commands(app: typer.Typer, console: Console) -> None:
         profile_dir: Annotated[
             Optional[str],
             typer.Argument(
-                help="The path to the profile file. If left blank it will use './profiles.yml' if it exists, otherwise '$HOME/.ingenious/profiles.yml'"
+                help=(
+                    "The path to the profile file. If left blank it will use "
+                    "'./profiles.yml' if it exists, otherwise "
+                    "'$HOME/.ingenious/profiles.yml'"
+                )
             ),
         ] = None,
         host: Annotated[
             str,
             typer.Argument(
-                help="The host to run the server on. Default is 127.0.0.1. For docker or external access use 0.0.0.0"
+                help=(
+                    "The host to run the server on. Default is 127.0.0.1. For "
+                    "docker or external access use 0.0.0.0"
+                )
             ),
-        ] = "127.0.0.1",
+        ] = DEFAULT_LOCAL_HOST,
         port: Annotated[
             int,
             typer.Argument(help="The port to run the server on. Default is 80."),
-        ] = 80,
+        ] = DEFAULT_PORT,
     ) -> None:
         """
         Run a FastAPI server that presents your agent workflows via REST endpoints.
@@ -220,24 +308,22 @@ def register_commands(app: typer.Typer, console: Console) -> None:
 
         config = get_config()
 
-        # Override host and port from CLI parameters only if they differ from defaults
-        config.web_configuration.ip_address = host
+        # Resolve host/port at call time so env monkeypatching in tests is honored.
+        resolved_host, resolved_port = resolve_host_port(
+            host_flag=host, port_flag=port
+        )
+        # Apply resolved values to the runtime configuration used by uvicorn.
+        config.web_configuration.ip_address = resolved_host
+        config.web_configuration.port = resolved_port
 
-        # Only override port if it was explicitly provided via CLI (different from env var default)
-        default_port_from_env = int(os.getenv("WEB_PORT", "80"))
-        if port != default_port_from_env or os.getenv("WEB_PORT") is not None:
-            # If port was explicitly set via CLI or WEB_PORT env var, use it
-            config.web_configuration.port = port
-        # Otherwise, let the configuration system use INGENIOUS_WEB_CONFIGURATION__PORT
-
-        # We need to clean this up and probably separate overall system config from fast api, eg. set the config here in cli and then pass it to FastAgentAPI
-        # As soon as we import FastAgentAPI, config will be loaded hence to ensure that the environment variables above are loaded first we need to import FastAgentAPI after setting the environment variables
-
+        # Ensure FastAPI app observes the environment already set above
         os.environ["LOADENV"] = "False"
         console.print(
             f"Running all elements of the project in {project_dir}", style="info"
         )
-        # If the code has been pip installed then recursively copy the ingenious folder into the site-packages directory
+
+        # If the code has been pip installed then recursively copy the ingenious
+        # folder into the site-packages directory.
         if CliFunctions.PureLibIncludeDirExists():
             src = Path(os.getcwd()) / Path("ingenious/")
             if os.path.exists(src):
@@ -252,6 +338,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
         )
 
         def log_namespace_modules(namespace: str) -> None:
+            """Log available modules under a namespace for diagnostics."""
             try:
                 package = importlib.import_module(namespace)
                 if hasattr(package, "__path__"):
@@ -292,7 +379,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
             typer.Option(
                 "--port", "-p", help="Port for the prompt tuner (default: 5000)"
             ),
-        ] = 5000,
+        ] = DEFAULT_TUNER_PORT,
         host: Annotated[
             str,
             typer.Option(
@@ -300,7 +387,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 "-h",
                 help="Host to bind the prompt tuner (default: 127.0.0.1)",
             ),
-        ] = "127.0.0.1",
+        ] = DEFAULT_LOCAL_HOST,
     ) -> None:
         """
         🎯 Start the standalone prompt tuning web interface.

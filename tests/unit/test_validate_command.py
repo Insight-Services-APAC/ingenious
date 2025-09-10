@@ -136,8 +136,21 @@ class TestValidateCommand:
 
     def test_validate_port_availability_open(self, validate_command, mock_console):
         """Test port availability when port is open."""
-        with patch("socket.socket") as mock_socket:
-            mock_socket.return_value.__enter__.return_value.bind.return_value = None
+        # Patch global socket and config used by the validator.
+        with patch("socket.socket") as mock_socket, patch(
+            "ingenious.config.config.get_config"
+        ) as mock_conf:
+            cfg = MagicMock()
+            cfg.web_configuration.port = 8080
+            cfg.web_configuration.host = "127.0.0.1"
+            mock_conf.return_value = cfg
+
+            sock = mock_socket.return_value.__enter__.return_value
+            # Non-zero => not in use
+            sock.connect_ex.return_value = 111
+            # Allow binding to succeed
+            sock.bind.return_value = None
+
             success, issues = validate_command._validate_port_availability()
             assert success
 
