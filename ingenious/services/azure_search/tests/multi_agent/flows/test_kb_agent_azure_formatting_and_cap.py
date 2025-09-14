@@ -41,7 +41,8 @@ def install_azure_sdk_ok(monkeypatch: pytest.MonkeyPatch) -> None:
         * azure.search.documents.aio.SearchClient
           - async get_document_count()
           - async close()
-    - Finally, we patch the *symbol where it is used* (`kb.make_async_search_client`)
+    - Finally, we patch the *central seam*
+      (`ingenious.services.azure_search.client_init.make_async_search_client`)
       to return an instance of our fake client. This guarantees the KB preflight
       sees a client compatible with the real API, avoiding
       `'FakeSearchClient' has no attribute 'get_document_count'` errors.
@@ -101,14 +102,7 @@ def install_azure_sdk_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "azure.core.credentials", fake_credentials_mod)
     monkeypatch.setitem(sys.modules, "azure.search.documents.aio", fake_aio_mod)
 
-    # 4) Patch the KB module's `make_async_search_client` symbol so that when the KB
-    #    code calls `make_async_search_client(cfg_stub)`, we return the fake SDK client
-    #    we just installed (which has the async methods preflight expects).
-    #
-    #    NOTE: Patch the import *site* (the KB module), not the factory module,
-    #    because the KB file imported `make_async_search_client` by value, not by name.
-    import ingenious.services.chat_services.multi_agent.conversation_flows.knowledge_base_agent.knowledge_base_agent as kb  # noqa: E501
-
+    # Define the seam builder BEFORE monkeypatching references to it to avoid UnboundLocalError.
     def _build_fake_client_from_cfg(cfg: Any) -> _FakeAsyncSearchClient:
         """
         The KB preflight passes a SimpleNamespace stub with three attributes:
@@ -138,6 +132,16 @@ def install_azure_sdk_ok(monkeypatch: pytest.MonkeyPatch) -> None:
             index_name=index_name,
             credential=_FakeAzureKeyCredential(key),
         )
+
+    # 4) Patch the *central seam* so that when the KB code calls
+    #    `make_async_search_client(cfg_stub)`, we return the fake SDK client with
+    #    the async methods preflight expects.
+    # Patch the central seam (import site–agnostic).
+    monkeypatch.setattr(
+        "ingenious.services.azure_search.client_init.make_async_search_client",
+        _build_fake_client_from_cfg,
+        raising=True,
+    )
 
     # Patch the symbol *used by the KB module*.
     monkeypatch.setattr(

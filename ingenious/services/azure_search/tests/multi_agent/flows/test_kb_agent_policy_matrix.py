@@ -160,8 +160,10 @@ def install_azure_sdk_ok(monkeypatch: pytest.MonkeyPatch) -> None:
       * azure.search.documents.aio.SearchClient
           - async get_document_count()
           - async close()
-    Finally, we patch the *KB module's* 'make_async_search_client' symbol to return our
-    fake client, guaranteeing preflight sees a client with the expected methods.
+    Finally, we patch the central seam
+    'ingenious.services.azure_search.client_init.make_async_search_client' to
+    return our fake client, guaranteeing preflight sees a client with the
+    expected methods.
     """
 
     import sys
@@ -224,8 +226,6 @@ def install_azure_sdk_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     #    so we must patch kb.make_async_search_client directly.
     # -----------------------------------------------------------------
 
-    import ingenious.services.chat_services.multi_agent.conversation_flows.knowledge_base_agent.knowledge_base_agent as kb
-
     def _build_fake_client_from_cfg(cfg: Any) -> _FakeAsyncSearchClient:
         """
         KB preflight passes a SimpleNamespace with:
@@ -254,7 +254,9 @@ def install_azure_sdk_ok(monkeypatch: pytest.MonkeyPatch) -> None:
 
     # This ensures preflight builds a client with async get_document_count() + close().
     monkeypatch.setattr(
-        kb, "make_async_search_client", _build_fake_client_from_cfg, raising=True
+        "ingenious.services.azure_search.client_init.make_async_search_client",
+        _build_fake_client_from_cfg,
+        raising=True,
     )
 
     # -----------------------------------------------------------------
@@ -269,7 +271,6 @@ def install_azure_sdk_ok(monkeypatch: pytest.MonkeyPatch) -> None:
         )
     except Exception:
         pass
-
 
 def install_fake_provider(
     monkeypatch: MonkeyPatch, results: list[dict[str, Any]] | None = None

@@ -105,16 +105,15 @@ async def test_invalid_kb_mode_coerces_to_direct(
     ---------------------------
     - The KB flow performs a strict preflight: `await client.get_document_count()`.
     - In this test file we published fake `azure.*` modules into sys.modules (good),
-      but we did NOT guarantee that the KB module’s `make_async_search_client` returns
-      an instance of THAT fake async client.
-    - If a prior patch returns some other fake without `get_document_count`, preflight
-      raises, Azure path is skipped, and the flow drops to the Chroma path, causing
-      the assertion to fail.
+      but previously we patched the KB module’s import site. We now patch the
+      **central seam**:
+        `ingenious.services.azure_search.client_init.make_async_search_client`
+      so the KB flow constructs a fake async client that implements
+      `get_document_count()` regardless of import indirection.
 
     What we add here:
     -----------------
-    - Patch the KB module’s `make_async_search_client` (the **import site** used by the flow)
-      to build our fake async SearchClient type that implements `get_document_count()`.
+    - Patch the central seam to build our fake async SearchClient type.
     - Clear policy env vars so nothing forces a local/non-Azure path.
     """
 
@@ -187,9 +186,8 @@ async def test_invalid_kb_mode_coerces_to_direct(
     )
     sys.modules["azure.search.documents.aio"].SearchClient = _Client  # type: ignore[attr-defined]
 
-    # 4) CRITICAL: Patch the KB module’s *imported* symbol `make_async_search_client` so that
-    #    the KB flow actually constructs OUR fake async client above. Patching the factory
-    #    module is NOT sufficient because the KB file imported the function by value.
+    # 4) CRITICAL: Patch the *central seam* `make_async_search_client` so that the KB
+    #    flow actually constructs OUR fake async client above.
     def _make_fake_client_from_cfg(cfg: Any) -> _Client:
         """
         Build our fake async client using the stub config the KB preflight passes.
@@ -214,9 +212,11 @@ async def test_invalid_kb_mode_coerces_to_direct(
             credential=_Cred(str(key)),
         )
 
-    # Patch the symbol where it is used by the flow.
+    # Patch the central seam (import site–agnostic).
     monkeypatch.setattr(
-        kb, "make_async_search_client", _make_fake_client_from_cfg, raising=True
+        "ingenious.services.azure_search.client_init.make_async_search_client",
+        _make_fake_client_from_cfg,
+        raising=True,
     )
 
     # 5) Make sure the Azure provider import is “available” to the flow so

@@ -346,16 +346,36 @@ async def test_require_valid_index_variants_async(
         await f3._require_valid_azure_index(logger)
     assert e3.value.reason == "sdk_missing"
 
-    # 4) preflight_failed (client call raises)
-    # Restore normal importing so the SDK stubs below can be imported
+    # 4) preflight_failed (client factory fails internally)
+    #
+    # Make this case deterministic on all machines by:
+    #  - Restoring normal import semantics
+    #  - Installing stub Azure SDK modules so the 'sdk_missing' branch is NOT taken
+    #  - Patching the client factory seam(s) to raise → maps to 'preflight_failed'
     monkeypatch.setattr(builtins, "__import__", orig_import)
-    f4 = _mk(endpoint="https://s", key="k", index="idx")
-    # This test case implicitly relies on `install_azure_sdk` not being called,
-    # so the import will succeed but the client creation will fail internally.
+
+    # Ensure Azure SDK is importable (stubbed)
+    install_azure_sdk(monkeypatch)
+
+    # Patch the central factory seam to a function that raises.
+    bad_mod = types.ModuleType("ingenious.services.azure_search.client_init")
+
+    def make_async_search_client(_cfg: Any, **_kw: Any) -> Any:
+        # Simulate an internal error during client creation
+        raise RuntimeError("factory failed internally")
+
+    bad_mod.make_async_search_client = make_async_search_client
+    # Ensure importlib.import_module("ingenious.services.azure_search.client_init") returns our stub
+    monkeypatch.setitem(sys.modules, "ingenious.services.azure_search.client_init", bad_mod)
+
+    # Also patch the KB module's re-export seam (back-compat path)
+    monkeypatch.setattr(kb, "make_async_search_client", make_async_search_client, raising=False)
+
+    # Use a syntactically valid endpoint to avoid any early "obviously bad" endpoint guards
+    f4 = _mk(endpoint="https://s.net", key="k", index="idx")
     with pytest.raises(PreflightError) as e4:
         await f4._require_valid_azure_index(logger)
     assert e4.value.reason == "preflight_failed"
-
 
 @pytest.mark.asyncio
 async def test_azure_only_preflight_failed_bubbles_from_search(

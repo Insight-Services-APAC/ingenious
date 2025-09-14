@@ -36,7 +36,7 @@ from ingenious.core.structured_logging import get_logger
 from ingenious.db.chat_history_repository import ChatHistoryRepository
 from ingenious.errors.content_filter_error import ContentFilterError
 from ingenious.files.files_repository import FileStorage
-from ingenious.models.chat import ChatResponseChunk, IChatRequest, IChatResponse
+from ingenious.models.chat import ChatResponse, ChatResponseChunk, IChatRequest, IChatResponse
 from ingenious.utils.namespace_utils import (
     import_class_with_fallback,
     normalize_workflow_name,
@@ -443,7 +443,6 @@ class multi_agent_chat_service:
         Returns:
             A `ChatResponse` instance.
         """
-        from ingenious.models.chat import ChatResponse
 
         logger.debug(
             "Received conversation flow response",
@@ -623,6 +622,80 @@ class multi_agent_chat_service:
                 conversation_flow_service_class, "get_streaming_conversation_response"
             )
 
+            # ─────────────────────────────────────────────────────────────
+            # Back-compat normalizer for raw stream items from flows
+            # - Maps legacy alias 'token_count' → valid 'usage'
+            # - Fills thread_id/message_id if missing
+            # - Degrades unknown-but-textual items to 'content', else skips
+            # ─────────────────────────────────────────────────────────────
+            def _normalize_to_chunk(raw: Any) -> Optional[ChatResponseChunk]:
+                # If it's already a ChatResponseChunk, ensure IDs and return
+                if isinstance(raw, ChatResponseChunk):
+                    if not raw.thread_id:
+                        raw.thread_id = chat_request.thread_id or str(uuid_module.uuid4())
+                    if not raw.message_id:
+                        raw.message_id = str(uuid_module.uuid4())
+                    # If a flow marks a 'final' chunk but forgot is_final
+                    if raw.chunk_type == "final" and not raw.is_final:
+                        raw.is_final = True
+                    return raw
+
+                # Helper to read attributes from objects or dicts
+                def _get(obj: Any, name: str, default: Any = None) -> Any:
+                    if isinstance(obj, dict):
+                        return obj.get(name, default)
+                    return getattr(obj, name, default)
+
+                raw_type = _get(raw, "chunk_type", None)
+
+                # Legacy alias: token_count → usage
+                if raw_type == "token_count":
+                    return ChatResponseChunk(
+                        thread_id=_get(raw, "thread_id", None)
+                        or chat_request.thread_id
+                        or str(uuid_module.uuid4()),
+                        message_id=_get(raw, "message_id", None) or str(uuid_module.uuid4()),
+                        chunk_type="usage",
+                        token_count=_get(raw, "token_count", None),
+                        max_token_count=_get(raw, "max_token_count", None),
+                        is_final=False,
+                    )
+
+                allowed = {"content", "final", "status", "usage", "delta", "summary", "error"}
+                if raw_type not in allowed:
+                    # If it looks like text, downgrade to a content chunk
+                    content = _get(raw, "content", None)
+                    if isinstance(content, str) and content:
+                        return ChatResponseChunk(
+                            thread_id=_get(raw, "thread_id", None)
+                            or chat_request.thread_id
+                            or str(uuid_module.uuid4()),
+                            message_id=_get(raw, "message_id", None) or str(uuid_module.uuid4()),
+                            chunk_type="content",
+                            content=content,
+                            is_final=False,
+                        )
+                    # Otherwise skip unknown item quietly (back-compat)
+                    logger.debug("Skipped unknown stream item", raw_type=str(raw_type))
+                    return None
+
+                # Normal path for supported chunk types
+                return ChatResponseChunk(
+                    thread_id=_get(raw, "thread_id", None)
+                    or chat_request.thread_id
+                    or str(uuid_module.uuid4()),
+                    message_id=_get(raw, "message_id", None) or str(uuid_module.uuid4()),
+                    chunk_type=raw_type or "content",
+                    content=_get(raw, "content", None),
+                    token_count=_get(raw, "token_count", None),
+                    max_token_count=_get(raw, "max_token_count", None),
+                    topic=_get(raw, "topic", None),
+                    memory_summary=_get(raw, "memory_summary", None),
+                    followup_questions=_get(raw, "followup_questions", None),
+                    event_type=_get(raw, "event_type", None),
+                    is_final=bool(_get(raw, "is_final", False)),
+                )
+
             # Determine if the attribute is a staticmethod (legacy support)
             is_static_stream = False
             is_true_override = False
@@ -655,65 +728,30 @@ class multi_agent_chat_service:
                     async for raw in instance.get_streaming_conversation_response(
                         chat_request
                     ):
-                        # Normalize chunk fields and ensure IDs are set
-                        chunk = (
-                            raw
-                            if isinstance(raw, ChatResponseChunk)
-                            else ChatResponseChunk(
-                                thread_id=getattr(raw, "thread_id", None)
-                                or chat_request.thread_id
-                                or str(uuid_module.uuid4()),
-                                message_id=getattr(raw, "message_id", None)
-                                or str(uuid_module.uuid4()),
-                                chunk_type=getattr(raw, "chunk_type", "content"),
-                                content=getattr(raw, "content", None),
-                                token_count=getattr(raw, "token_count", None),
-                                max_token_count=getattr(raw, "max_token_count", None),
-                                topic=getattr(raw, "topic", None),
-                                memory_summary=getattr(raw, "memory_summary", None),
-                                followup_questions=getattr(
-                                    raw, "followup_questions", None
-                                ),
-                                event_type=getattr(raw, "event_type", None),
-                                is_final=bool(getattr(raw, "is_final", False)),
-                            )
-                        )
-                        if not chunk.thread_id:
-                            chunk.thread_id = (
-                                chat_request.thread_id or str(uuid_module.uuid4())
-                            )
-                        if not chunk.message_id:
-                            chunk.message_id = str(uuid_module.uuid4())
+                        chunk = _normalize_to_chunk(raw)
+                        if chunk is None:
+                            continue
                         yield chunk
                     return
 
                 # Legacy static streaming method (preserved)
-                async for chunk in conversation_flow_service_class.get_streaming_conversation_response(  # type: ignore[attr-defined]
+                async for raw in conversation_flow_service_class.get_streaming_conversation_response(  # type: ignore[attr-defined]
                     chat_request.user_prompt,
                     [],  # topics placeholder for legacy signature
                     chat_request.thread_memory or "",
                     chat_request.memory_record or True,
-                    chat_request.thread_chat_history or {},
+                    chat_request.thread_chat_history or [],
                     chat_request,
                 ):
-                    # Ensure IDs present even for legacy chunks
-                    if not getattr(chunk, "thread_id", None):
-                        chunk.thread_id = chat_request.thread_id or str(
-                            uuid_module.uuid4()
-                        )
-                    if not getattr(chunk, "message_id", None):
-                        chunk.message_id = str(uuid_module.uuid4())
+                    chunk = _normalize_to_chunk(raw)
+                    if chunk is None:
+                        continue
                     yield chunk
                 return
 
             # ──────────────── Fallback path (no native streaming) ────────────────
             # Choose protocol: default v1 (compat), optional v2 via config flag
             protocol = self._get_stream_protocol_version()
-
-            # Get a full response using the synchronous path.
-            # IMPORTANT: Do NOT set `chat_request.stream` here to preserve
-            # original behavior where fallback path persisted history once.
-            from ingenious.models.chat import ChatResponse
 
             response_any = await self.get_chat_response(chat_request)
             response: Any = (
@@ -779,15 +817,7 @@ class multi_agent_chat_service:
             target = max(DEFAULT_V2_TARGET_CHARS, self._get_configured_chunk_size())
 
             def _chunk_text_by_words(text: str, target_chars: int) -> List[str]:
-                """Split text near word boundaries without exceeding target size.
-
-                Args:
-                    text: The content to split.
-                    target_chars: Approximate maximum characters per chunk.
-
-                Returns:
-                    List of chunk strings.
-                """
+                """Split text near word boundaries without exceeding target size."""
                 parts: List[str] = []
                 if not text:
                     return parts
@@ -817,7 +847,6 @@ class multi_agent_chat_service:
 
             # Summary chunk carries brief memory summary + full text
             mem_summary = response.memory_summary or full_text
-            # Tests require the trimmed memory summary to be **<= 200** chars (no ellipsis)
             if mem_summary and len(mem_summary) > 200:
                 mem_summary = mem_summary[:200]
             yield ChatResponseChunk(
@@ -837,9 +866,7 @@ class multi_agent_chat_service:
                 try:
                     # Lazy import to avoid import-time failure in environments
                     # missing the optional token counter.
-                    from ingenious.utils.token_counter import (
-                        num_tokens_from_messages,
-                    )
+                    from ingenious.utils.token_counter import num_tokens_from_messages
 
                     # Best-effort model selection
                     model_name: str = ""

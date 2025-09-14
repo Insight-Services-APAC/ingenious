@@ -120,8 +120,9 @@ class MockAssistantAgent:
 def patch_tool_and_agent(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     Patches FunctionTool, AssistantAgent, and installs a minimal fake Azure SDK.
-    ALSO patches the KB module's `make_async_search_client` so strict preflight
-    (`await client.get_document_count()`) *always* succeeds in tests.
+    ALSO patches the central seam
+    `ingenious.services.azure_search.client_init.make_async_search_client` so
+    strict preflight (`await client.get_document_count()`) *always* succeeds.
 
     Why we patch `make_async_search_client` here:
     ---------------------------------------
@@ -204,11 +205,8 @@ def patch_tool_and_agent(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "azure.search.documents.aio", aio)
 
     # ------------------------------------------------------------------
-    # 3) Patch the *KB module's* `make_async_search_client` so that the KB flow
-    #    actually CONSTRUCTS our fake async client above during preflight.
-    #
-    #    IMPORTANT: We patch the import *site* used by the flow (the KB module),
-    #    not the factory module, because the KB file imported the function by value.
+    # 3) Patch the *central seam* so the KB flow constructs our fake async client
+    #    during preflight, regardless of import indirection.
     # ------------------------------------------------------------------
     def _build_fake_client_from_cfg(cfg: Any) -> _Client:
         """
@@ -241,7 +239,7 @@ def patch_tool_and_agent(monkeypatch: pytest.MonkeyPatch) -> None:
 
     # Patch the symbol where the KB module calls it.
     monkeypatch.setattr(
-        "ingenious.services.chat_services.multi_agent.conversation_flows.knowledge_base_agent.knowledge_base_agent.make_async_search_client",
+        "ingenious.services.azure_search.client_init.make_async_search_client",
         _build_fake_client_from_cfg,
         raising=True,
     )
