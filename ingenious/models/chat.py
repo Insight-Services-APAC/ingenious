@@ -8,7 +8,8 @@ and compatible with both non‑streaming and streaming flows.
 Why:
 - Tests construct `ChatRequest(topic=["general"])`; we therefore accept
   `str | list[str] | None` for `topic` and leave normalization to services.
-- Streaming flows use several chunk types; we enumerate the current superset.
+- Streaming flows use several chunk types; we enumerate the current superset,
+  including legacy `"token_count"` for back‑compat with older clients/tests.
 - Defaults are chosen to be safe in tests (e.g., empty containers via
   `default_factory`, optional IDs for backfilling).
 
@@ -17,7 +18,6 @@ Usage:
 - Use `ChatResponseChunk` within `StreamingChatResponse(event="data")` frames.
 - SSE envelopes use events: `"data" | "error" | "done"`.
 """
-
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -125,6 +125,7 @@ _ChunkType = Literal[
     "delta",
     "summary",
     "error",
+    "token_count",  # Back-compat: legacy clients & tests rely on this explicit chunk
 ]
 
 
@@ -138,7 +139,7 @@ class ChatResponseChunk(BaseModel):
 
     Fields:
         chunk_type: One of: "content", "final", "status", "usage",
-                    "delta", "summary", "error".
+                    "delta", "summary", "error", "token_count".
         is_final:  True only for the terminal "final" chunk at the flow layer.
     """
 

@@ -1,29 +1,24 @@
-# tests/test_streaming/test_api_nonstream_chat.py
-"""Non-streaming Chat API route tests.
+"""Non‑streaming Chat API tests (pinpoint DI overrides via chat module).
 
-These tests cover `POST /api/v1/chat` behavior that is intentionally not covered
-by the streaming suite. We validate: happy-path JSON (non‑SSE) response shape,
-default `user_id` backfilling, validation error mapping (→400), content filter
-and token limit error mappings (→406/413), and unexpected errors (→500).
-All remote/service dependencies are monkeypatched to fakes.
-
-Usage:
-- Reuses `async_client` from `tests/test_streaming/conftest.py`.
-- Patches `ingenious.api.routes.chat.get_chat_service` and
-  `ingenious.api.routes.chat.get_conditional_security`.
+Why this fixes your failures:
+  - We override the *exact* callables that the chat routes imported:
+      ingenious.api.routes.chat.get_chat_service
+      ingenious.api.routes.chat.get_conditional_security
+    That guarantees our fake runs and avoids env/config lookups entirely.
 """
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from contextlib import contextmanager
+from typing import Any, Callable, Iterator, Optional
 
 import httpx
 import pytest
+from fastapi import FastAPI
 
 from ingenious.errors.content_filter_error import ContentFilterError
 from ingenious.errors.token_limit_exceeded_error import TokenLimitExceededError
 from ingenious.models.chat import ChatRequest, ChatResponse
-
 
 DEFAULT_USER_ID = "unspecified_user"
 JSON_MEDIA_TYPE_SUBSTR = "application/json"
@@ -31,19 +26,13 @@ SSE_MEDIA_TYPE = "text/event-stream"
 
 
 class _FakeNonstreamService:
-    """Fake ChatService used by the non‑streaming route tests."""
+    """Minimal fake for the non‑streaming ChatService path."""
 
     def __init__(self, responder: Optional[Callable[[ChatRequest], Any]] = None) -> None:
-        """Create a fake that returns a ChatResponse or raises as configured.
-
-        Args:
-            responder: Optional callable to produce a response or raise.
-        """
         self._responder = responder
         self.last_request: Optional[ChatRequest] = None
 
     async def get_chat_response(self, chat_request: ChatRequest) -> ChatResponse:
-        """Return a response or raise via the configured responder."""
         self.last_request = chat_request
         if self._responder is not None:
             result = self._responder(chat_request)
@@ -60,27 +49,45 @@ class _FakeNonstreamService:
         )
 
 
-def _patch_common_dependencies(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Silence namespace scanning and bypass auth guard for tests."""
+@contextmanager
+def _override_route_di(
+    async_client: httpx.AsyncClient, chat_service: _FakeNonstreamService, username: str = "tester"
+) -> Iterator[None]:
+    """Override the route's imported DI callables directly."""
+    app_ref = async_client._transport.app  # type: ignore[attr-defined]
+    assert isinstance(app_ref, FastAPI)
+
     import ingenious.api.routes.chat as chat_mod
 
-    def _noop(*_args: object, **_kwargs: object) -> None:
-        return None
+    prev_svc = app_ref.dependency_overrides.get(chat_mod.get_chat_service)
+    prev_user = app_ref.dependency_overrides.get(chat_mod.get_conditional_security)
 
-    def _dummy_security() -> str:
-        return "tester"
+    app_ref.dependency_overrides[chat_mod.get_chat_service] = lambda: chat_service
+    app_ref.dependency_overrides[chat_mod.get_conditional_security] = lambda: username
 
-    monkeypatch.setattr(chat_mod.ns_utils, "print_namespace_modules", _noop)
-    monkeypatch.setattr(chat_mod, "get_conditional_security", _dummy_security)
+    # Silence namespace scan for deterministic tests
+    orig_print_ns = chat_mod.ns_utils.print_namespace_modules
+    chat_mod.ns_utils.print_namespace_modules = lambda *a, **k: None
+
+    try:
+        yield
+    finally:
+        if prev_svc is None:
+            app_ref.dependency_overrides.pop(chat_mod.get_chat_service, None)
+        else:
+            app_ref.dependency_overrides[chat_mod.get_chat_service] = prev_svc
+
+        if prev_user is None:
+            app_ref.dependency_overrides.pop(chat_mod.get_conditional_security, None)
+        else:
+            app_ref.dependency_overrides[chat_mod.get_conditional_security] = prev_user
+
+        chat_mod.ns_utils.print_namespace_modules = orig_print_ns
 
 
 @pytest.mark.anyio
-async def test_nonstream_happy_path_json_response(async_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """It returns 200 JSON (non‑SSE) with required ChatResponse fields."""
-    import ingenious.api.routes.chat as chat_mod
-
-    _patch_common_dependencies(monkeypatch)
-
+async def test_nonstream_happy_path_json_response(async_client: httpx.AsyncClient) -> None:
+    """It returns 200 JSON with required ChatResponse fields from our fake."""
     fake = _FakeNonstreamService(
         responder=lambda r: ChatResponse(
             thread_id=r.thread_id or "t-abc",
@@ -91,14 +98,14 @@ async def test_nonstream_happy_path_json_response(async_client: httpx.AsyncClien
             memory_summary="mem",
         )
     )
-    monkeypatch.setattr(chat_mod, "get_chat_service", lambda: fake)
+    with _override_route_di(async_client, fake):
+        payload = {
+            "user_prompt": "hi",
+            "conversation_flow": "classification_agent",
+            "user_id": "u-1",
+        }
+        resp = await async_client.post("/api/v1/chat", json=payload)
 
-    payload = {
-        "user_prompt": "hi",
-        "conversation_flow": "classification_agent",
-        "user_id": "u-1",
-    }
-    resp = await async_client.post("/api/v1/chat", json=payload)
     assert resp.status_code == 200, resp.text
     ctype = resp.headers.get("content-type", "")
     assert JSON_MEDIA_TYPE_SUBSTR in ctype
@@ -111,84 +118,61 @@ async def test_nonstream_happy_path_json_response(async_client: httpx.AsyncClien
 
 
 @pytest.mark.anyio
-async def test_nonstream_default_user_id_backfill(async_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_nonstream_default_user_id_backfill(async_client: httpx.AsyncClient) -> None:
     """Route fills missing `user_id` with DEFAULT_USER_ID before delegating."""
-    import ingenious.api.routes.chat as chat_mod
-
-    _patch_common_dependencies(monkeypatch)
-
     fake = _FakeNonstreamService()
-    monkeypatch.setattr(chat_mod, "get_chat_service", lambda: fake)
+    with _override_route_di(async_client, fake):
+        payload = {
+            "user_prompt": "hi",
+            "conversation_flow": "classification_agent",
+            # user_id intentionally omitted
+        }
+        resp = await async_client.post("/api/v1/chat", json=payload)
 
-    payload = {
-        "user_prompt": "hi",
-        "conversation_flow": "classification_agent",
-        # user_id intentionally omitted
-    }
-    resp = await async_client.post("/api/v1/chat", json=payload)
     assert resp.status_code == 200, resp.text
-
     assert fake.last_request is not None
     assert fake.last_request.user_id == DEFAULT_USER_ID
 
 
 @pytest.mark.anyio
-async def test_nonstream_validation_error_400(async_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_nonstream_validation_error_400(async_client: httpx.AsyncClient) -> None:
     """Missing `conversation_flow` triggers HTTP 400 with value error detail."""
-    import ingenious.api.routes.chat as chat_mod
+    fake = _FakeNonstreamService()
+    with _override_route_di(async_client, fake):
+        payload = {"user_prompt": "hi"}  # conversation_flow omitted
+        resp = await async_client.post("/api/v1/chat", json=payload)
 
-    _patch_common_dependencies(monkeypatch)
-    monkeypatch.setattr(chat_mod, "get_chat_service", lambda: _FakeNonstreamService())
-
-    payload = {
-        "user_prompt": "hi",
-        # conversation_flow intentionally omitted
-    }
-    resp = await async_client.post("/api/v1/chat", json=payload)
     assert resp.status_code == 400
     assert "conversation_flow not set" in resp.json().get("detail", "")
 
 
 @pytest.mark.anyio
-async def test_nonstream_error_mapping_406_and_413(async_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_nonstream_error_mapping_406_and_413(async_client: httpx.AsyncClient) -> None:
     """ContentFilterError→406 and TokenLimitExceededError→413 are mapped."""
-    import ingenious.api.routes.chat as chat_mod
-
-    _patch_common_dependencies(monkeypatch)
-
-    # 406 mapping
+    # 406
     fake_406 = _FakeNonstreamService(responder=lambda _r: ContentFilterError("blocked"))
-    monkeypatch.setattr(chat_mod, "get_chat_service", lambda: fake_406)
-    payload: dict[str, Any] = {
-        "user_prompt": "hi",
-        "conversation_flow": "classification_agent",
-    }
-    resp = await async_client.post("/api/v1/chat", json=payload)
+    with _override_route_di(async_client, fake_406):
+        payload = {"user_prompt": "hi", "conversation_flow": "classification_agent"}
+        resp = await async_client.post("/api/v1/chat", json=payload)
     assert resp.status_code == 406
     assert "Content filtered" in resp.json().get("detail", "")
 
-    # 413 mapping
+    # 413
     fake_413 = _FakeNonstreamService(responder=lambda _r: TokenLimitExceededError("too long"))
-    monkeypatch.setattr(chat_mod, "get_chat_service", lambda: fake_413)
-    resp = await async_client.post("/api/v1/chat", json=payload)
+    with _override_route_di(async_client, fake_413):
+        resp = await async_client.post("/api/v1/chat", json=payload)
     assert resp.status_code == 413
     assert "Token limit exceeded" in resp.json().get("detail", "")
 
 
 @pytest.mark.anyio
-async def test_nonstream_unexpected_error_500(async_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_nonstream_unexpected_error_500(async_client: httpx.AsyncClient) -> None:
     """Unexpected exception is mapped to HTTP 500 with message (no traceback)."""
-    import ingenious.api.routes.chat as chat_mod
-
-    _patch_common_dependencies(monkeypatch)
-
     fake_500 = _FakeNonstreamService(responder=lambda _r: RuntimeError("boom"))
-    monkeypatch.setattr(chat_mod, "get_chat_service", lambda: fake_500)
-    payload = {
-        "user_prompt": "hi",
-        "conversation_flow": "classification_agent",
-    }
-    resp = await async_client.post("/api/v1/chat", json=payload)
+    with _override_route_di(async_client, fake_500):
+        payload = {"user_prompt": "hi", "conversation_flow": "classification_agent"}
+        resp = await async_client.post("/api/v1/chat", json=payload)
+
     assert resp.status_code == 500
     body = resp.json().get("detail", "")
     assert "boom" in body

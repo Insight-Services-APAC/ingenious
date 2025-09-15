@@ -1245,3 +1245,9 @@ def config_no_semantic(config: SearchConfig) -> SearchConfig:
 def async_iter() -> Type[AsyncIter]:
     """Return the `AsyncIter` helper class, used for creating async iterators."""
     return AsyncIter
+
+import pytest
+@pytest.fixture(autouse=True)
+def _clear_kb_policy_env(monkeypatch):
+    for k in ("KB_POLICY", "KNOWLEDGE_BASE_POLICY", "KB_AGENT_POLICY"):
+        monkeypatch.delenv(k, raising=False)

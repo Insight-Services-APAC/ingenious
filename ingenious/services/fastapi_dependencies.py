@@ -1,5 +1,4 @@
 """FastAPI dependency injection without dependency-injector library."""
-
 from functools import lru_cache
 from typing import Any
 

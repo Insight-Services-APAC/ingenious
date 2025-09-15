@@ -1,4 +1,3 @@
-# Insight_Ingenious/ingenious/services/chat_service.py
 """Chat service façade and streaming delegator.
 
 Provide a thin façade that dynamically loads the configured chat backend and
@@ -20,6 +19,7 @@ Key entry points:
 
 from __future__ import annotations
 
+import datetime
 import uuid
 from abc import ABC, abstractmethod
 from types import SimpleNamespace
@@ -37,10 +37,9 @@ from ingenious.models.config import Config
 # ---------------------------------------------------------------------------
 try:
     # Real helper provided by the project; tests patch this symbol on this module.
-    from ingenious.utils.imports import (  # type: ignore[import-untyped]
-        import_class_with_fallback as import_class_with_fallback,
-    )
+    from ingenious.utils.imports import import_class_with_fallback as import_class_with_fallback  # type: ignore[import-untyped]
 except Exception:  # pragma: no cover - ultra defensive
+
     def import_class_with_fallback(
         module_name: str, class_name: str, *, expected_methods: list[str]
     ) -> Any:
@@ -73,19 +72,17 @@ def _call_importer(
 
         imports_mod = import_module("ingenious.utils.imports")
         importer = getattr(imports_mod, "import_class_with_fallback")
-        return importer(
-            module_name, class_name, expected_methods=expected_methods
-        )
+        return importer(module_name, class_name, expected_methods=expected_methods)
     except Exception:
         # 2) Fallback to the alias captured on this module (also patchable)
-        return import_class_with_fallback(
-            module_name, class_name, expected_methods=expected_methods
-        )
+        return import_class_with_fallback(module_name, class_name, expected_methods=expected_methods)
+
 
 # Base error + a small compatibility wrapper ensuring `.context` is a dict.
 try:
     from ingenious.errors import ChatServiceError as _BaseChatServiceError
 except Exception:  # pragma: no cover - test environments may vary
+
     class _BaseChatServiceError(Exception):  # type: ignore[override]
         """Fallback base when error module is unavailable."""
 
@@ -127,10 +124,9 @@ class ChatServiceInitError(_BaseChatServiceError):
 
 # Custom ImportError type from the importer module (if provided)
 try:
-    from ingenious.utils.imports import (  # type: ignore[import-untyped]
-        ImportError as ImporterError,
-    )
+    from ingenious.utils.imports import ImportError as ImporterError  # type: ignore[import-untyped]
 except Exception:  # pragma: no cover - defensive fallback
+
     class ImporterError(Exception):  # type: ignore[override]
         """Fallback alias for the import helper's custom ImportError."""
 
@@ -226,9 +222,7 @@ class ChatService(IChatService):
         self.config = config
         self.revision = revision
         self.chat_history_repository = chat_history_repository
-
         module_name = SERVICE_MODULE_TEMPLATE.format(service=chat_service_type.lower())
-
         try:
             # Resolve the importer at call time so test monkeypatches are honored.
             service_class = _call_importer(
@@ -257,9 +251,7 @@ class ChatService(IChatService):
                 },
                 cause=e,
                 recoverable=False,
-                recovery_suggestion=(
-                    "Check if the chat service module exists and is properly installed"
-                ),
+                recovery_suggestion="Check if the chat service module exists and is properly installed",
             ) from e
         except AttributeError as e:
             raise ChatServiceInitError(
@@ -284,7 +276,6 @@ class ChatService(IChatService):
                 cause=e,
                 recovery_suggestion="Check chat service configuration and dependencies",
             ) from e
-
         self.service_class = service_class(
             config=config,
             chat_history_repository=chat_history_repository,
@@ -332,38 +323,27 @@ class ChatService(IChatService):
         """
         if not chat_request.conversation_flow:
             raise ValueError(f"conversation_flow not set {chat_request}")
-
         # Mark as streaming so downstream (multi-agent) skips premature persistence.
         chat_request.stream = True
-
         default_thread_id = chat_request.thread_id or str(uuid.uuid4())
         default_message_id = str(uuid.uuid4())
-
         collected_content_parts: list[str] = []
         final_memory_summary: str | None = None
         observed_thread_id: str | None = None
         observed_message_id: str | None = None
-
         try:
             # Delegate to the backend service (which may implement native streaming)
             if hasattr(self.service_class, "get_streaming_chat_response"):
-                async for chunk in self.service_class.get_streaming_chat_response(
-                    chat_request
-                ):
+                async for chunk in self.service_class.get_streaming_chat_response(chat_request):
                     # Track IDs for post-stream persistence
                     observed_thread_id = chunk.thread_id or observed_thread_id
                     observed_message_id = chunk.message_id or observed_message_id
-
                     # Accumulate textual content for history
-                    if (
-                        (chunk.chunk_type in FALLBACK_CONTENT_TYPES) or chunk.is_final
-                    ) and chunk.content:
+                    if ((chunk.chunk_type in FALLBACK_CONTENT_TYPES) or chunk.is_final) and chunk.content:
                         collected_content_parts.append(chunk.content)
-
                     # Capture memory summary if present
                     if chunk.memory_summary:
                         final_memory_summary = chunk.memory_summary
-
                     # Emit verbatim to preserve backend semantics
                     yield chunk
             else:
@@ -373,14 +353,12 @@ class ChatService(IChatService):
                     "chunked response",
                     service_class=self.service_class.__class__.__name__,
                 )
-
                 response = await self.service_class.get_chat_response(chat_request)
                 text = response.agent_response or ""
                 event_type = response.event_type
                 thread_id = response.thread_id or default_thread_id
                 message_id = response.message_id or default_message_id
                 chunk_size = self._get_streaming_chunk_size()
-
                 # Convert response to chunks with configurable size
                 if text:
                     for i in range(0, len(text), chunk_size):
@@ -393,7 +371,6 @@ class ChatService(IChatService):
                             event_type=event_type,
                             is_final=False,
                         )
-
                 # Send final chunk with metadata (preserve original fields)
                 yield ChatResponseChunk(
                     thread_id=thread_id,
@@ -407,14 +384,12 @@ class ChatService(IChatService):
                     event_type=event_type,
                     is_final=True,
                 )
-
                 # Collect for persistence
                 if text:
                     collected_content_parts.append(text)
                 final_memory_summary = response.memory_summary
                 observed_thread_id = thread_id
                 observed_message_id = message_id
-
         finally:
             # Best-effort persistence after the stream completes
             try:
@@ -425,31 +400,49 @@ class ChatService(IChatService):
                 ):
                     thread_id = observed_thread_id or default_thread_id
                     assistant_text = "".join(collected_content_parts).strip()
-
                     # Persist objects with attribute access (tests expect .role/.content)
                     user_msg = SimpleNamespace(
                         user_id=chat_request.user_id,
                         thread_id=thread_id,
                         role="user",
                         content=chat_request.user_prompt,
+                        message_id=uuid.uuid4(),
+                        timestamp=datetime.datetime.now(),
+                        positive_feedback=None,
+                        content_filter_results=None,
+                        tool_calls=None,
+                        tool_call_id=None,
+                        tool_call_function=None,
                     )
                     await self.chat_history_repository.add_message(user_msg)
-
                     if assistant_text:
                         asst_msg = SimpleNamespace(
                             user_id=chat_request.user_id,
                             thread_id=thread_id,
                             role="assistant",
                             content=assistant_text,
+                            message_id=uuid.uuid4(),
+                            timestamp=datetime.datetime.now(),
+                            positive_feedback=None,
+                            content_filter_results=None,
+                            tool_calls=None,
+                            tool_call_id=None,
+                            tool_call_function=None,
                         )
                         await self.chat_history_repository.add_message(asst_msg)
-
                     if final_memory_summary:
                         mem_msg = SimpleNamespace(
                             user_id=chat_request.user_id,
                             thread_id=thread_id,
                             role="memory_assistant",
                             content=final_memory_summary,
+                            message_id=uuid.uuid4(),
+                            timestamp=datetime.datetime.now(),
+                            positive_feedback=None,
+                            content_filter_results=None,
+                            tool_calls=None,
+                            tool_call_id=None,
+                            tool_call_function=None,
                         )
                         await self.chat_history_repository.add_memory(mem_msg)
             except Exception as e:  # noqa: BLE001 - never break the stream on persistence
@@ -474,14 +467,10 @@ class ChatService(IChatService):
         try:
             web_cfg = getattr(self.config, "web", None)
             if isinstance(web_cfg, dict):
-                val = int(
-                    web_cfg.get("streaming_chunk_size", DEFAULT_STREAMING_CHUNK_SIZE)
-                )
+                val = int(web_cfg.get("streaming_chunk_size", DEFAULT_STREAMING_CHUNK_SIZE))
             else:
                 val = int(
-                    getattr(
-                        web_cfg, "streaming_chunk_size", DEFAULT_STREAMING_CHUNK_SIZE
-                    )
+                    getattr(web_cfg, "streaming_chunk_size", DEFAULT_STREAMING_CHUNK_SIZE)
                 )
             return DEFAULT_STREAMING_CHUNK_SIZE if val <= 0 else val
         except (TypeError, ValueError, AttributeError):
