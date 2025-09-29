@@ -25,6 +25,8 @@ class azure_FileStorageRepository(IFileStorage):
         self.url = fs_config.url
         self.token = fs_config.token
         self.client_id = fs_config.client_id
+        self.client_secret = getattr(fs_config, "client_secret", None)
+        self.tenant_id = getattr(fs_config, "tenant_id", None)
         self.container_name = fs_config.container_name
         self.authentication_method = fs_config.authentication_method
 
@@ -42,10 +44,16 @@ class azure_FileStorageRepository(IFileStorage):
             self.authentication_method
             == file_storage_AuthenticationMethod.CLIENT_ID_AND_SECRET
         ):
+            tenant_id = self.tenant_id or ""
+            client_secret = self.client_secret or self.token or ""
+            if not (tenant_id and self.client_id and client_secret):
+                raise ValueError(
+                    "CLIENT_ID_AND_SECRET authentication requires tenant_id, client_id, and client_secret"
+                )
             cred = ClientSecretCredential(
-                tenant_id="",  # TODO: Add proper tenant_id from config
+                tenant_id=tenant_id,
                 client_id=self.client_id,
-                client_secret=self.token,
+                client_secret=client_secret,
             )
             self.blob_service_client = BlobServiceClient(
                 account_url=self.url, credential=cred
@@ -160,13 +168,13 @@ class azure_FileStorageRepository(IFileStorage):
             raise
         return str(path)
 
-    async def list_files(self, file_path: str) -> str:
+    async def list_files(self, file_path: str) -> List[str]:
         """
         List blobs in an Azure Blob container based on a path.
 
         :param file_path: Path within the storage container to list blobs from.
         """
-        blobs = []
+        blobs: List[str] = []
         try:
             path = Path(self.fs_config.path) / Path(file_path)
             prefix = str(path).replace(
@@ -181,7 +189,7 @@ class azure_FileStorageRepository(IFileStorage):
                 for blob in container_client.list_blobs(name_starts_with=prefix)
             ]
             # print(f"Blobs in container {self.container_name} with prefix {prefix}: {blobs}")
-            return "\n".join(blobs)
+            return blobs
         except Exception as e:
             logger.error(
                 f"Failed to list blobs in container {self.container_name} with prefix {prefix}: {e}"

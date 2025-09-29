@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from ingenious.config.settings import IngeniousSettings
+from ingenious.config import IngeniousSettings
 from ingenious.db.base_sql import BaseSQLRepository
 from ingenious.db.chat_history_repository import IChatHistoryRepository
 from ingenious.db.connection_pool import (

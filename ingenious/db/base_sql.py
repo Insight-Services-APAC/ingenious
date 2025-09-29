@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, List
 from uuid import UUID
 
-from ingenious.config.settings import IngeniousSettings
+from ingenious.config import IngeniousSettings
 from ingenious.db.chat_history_repository import IChatHistoryRepository
 from ingenious.db.query_builder import QueryBuilder
 from ingenious.models.message import Message

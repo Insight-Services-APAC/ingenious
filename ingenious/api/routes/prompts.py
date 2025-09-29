@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional, Set
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.security import HTTPBasicCredentials
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
@@ -64,9 +63,7 @@ async def _get_existing_revision_ids(fs: FileStorage) -> Set[str]:
 @router.get("/revisions/list")
 async def list_revisions(
     request: Request,
-    credentials: Annotated[
-        HTTPBasicCredentials, Depends(ingen_deps.get_conditional_security)
-    ],
+    username: Annotated[str, Depends(ingen_deps.get_conditional_security)],
     fs: FileStorage = Depends(ingen_deps.get_file_storage_revisions),
 ) -> Dict[str, Any]:
     """
@@ -88,9 +85,7 @@ async def list_revisions(
 @router.get("/workflows/list")
 async def list_workflows_for_prompts(
     request: Request,
-    credentials: Annotated[
-        HTTPBasicCredentials, Depends(ingen_deps.get_conditional_security)
-    ],
+    username: Annotated[str, Depends(ingen_deps.get_conditional_security)],
     fs: FileStorage = Depends(ingen_deps.get_file_storage_revisions),
 ) -> Dict[str, Any]:
     """
@@ -166,9 +161,7 @@ async def list_workflows_for_prompts(
 async def list_prompts_enhanced(
     revision_id: str,
     request: Request,
-    credentials: Annotated[
-        HTTPBasicCredentials, Depends(ingen_deps.get_conditional_security)
-    ],
+    username: Annotated[str, Depends(ingen_deps.get_conditional_security)],
     fs: FileStorage = Depends(ingen_deps.get_file_storage_revisions),
 ) -> Dict[str, Any]:
     """
@@ -191,19 +184,14 @@ async def list_prompts_enhanced(
                 prompt_template_folder = await fs.get_prompt_template_path(
                     revision_id=rid
                 )
-                files_raw = await fs.list_files(file_path=prompt_template_folder)
+                file_list = await fs.list_files(file_path=prompt_template_folder)
 
                 # Filter to get only template files
                 potential_files = []
-                # Handle string response from list_files (newline-separated)
-                file_list = files_raw.split("\n") if files_raw else []
                 for f in file_list:
                     if f and f.endswith((".md", ".jinja")):
                         # For Azure Blob Storage, extract just the filename
-                        if "/" in f:
-                            filename = f.split("/")[-1]
-                        else:
-                            filename = f
+                        filename = f.split("/")[-1] if "/" in f else f
                         potential_files.append(filename)
 
                 if potential_files:
@@ -252,9 +240,7 @@ async def view(
     revision_id: str,
     filename: str,
     request: Request,
-    credentials: Annotated[
-        HTTPBasicCredentials, Depends(ingen_deps.get_conditional_security)
-    ],
+    username: Annotated[str, Depends(ingen_deps.get_conditional_security)],
     fs: FileStorage = Depends(ingen_deps.get_file_storage_revisions),
 ) -> str:
     prompt_template_folder = await fs.get_prompt_template_path(revision_id=revision_id)
@@ -268,9 +254,7 @@ async def update(
     filename: str,
     request: Request,
     update_request: UpdatePromptRequest,
-    credentials: Annotated[
-        HTTPBasicCredentials, Depends(ingen_deps.get_conditional_security)
-    ],
+    username: Annotated[str, Depends(ingen_deps.get_conditional_security)],
     fs: FileStorage = Depends(ingen_deps.get_file_storage_revisions),
 ) -> Dict[str, str]:
     prompt_template_folder = await fs.get_prompt_template_path(revision_id=revision_id)
@@ -296,9 +280,7 @@ async def update(
 async def create_revision(
     request: Request,
     create_request: CreateRevisionRequest,
-    credentials: Annotated[
-        HTTPBasicCredentials, Depends(ingen_deps.get_conditional_security)
-    ],
+    username: Annotated[str, Depends(ingen_deps.get_conditional_security)],
     fs: FileStorage = Depends(ingen_deps.get_file_storage_revisions),
 ) -> Dict[str, Any]:
     """
@@ -336,7 +318,7 @@ async def create_revision(
         original_templates_revision = config.file_storage.revisions.original_templates
         source_path = await fs.get_prompt_template_path(original_templates_revision)
         try:
-            source_files_raw = await fs.list_files(file_path=source_path)
+            raw_source_files = await fs.list_files(file_path=source_path)
         except Exception as e:
             logger.error(
                 "Failed to access original templates directory",
@@ -351,27 +333,11 @@ async def create_revision(
             )
 
         # Parse source files - handle both newline-separated and Python list string formats
-        source_files = []
-        if source_files_raw:
-            file_list = []
-            if source_files_raw.startswith("[") and source_files_raw.endswith("]"):
-                # Python list string format: "['file1.jinja', 'file2.jinja']"
-                try:
-                    import ast
-
-                    file_list = ast.literal_eval(source_files_raw)
-                except (ValueError, SyntaxError):
-                    # Fallback to treating as single item
-                    file_list = [source_files_raw.strip("[]'\"")]
-            else:
-                # Newline-separated format
-                file_list = source_files_raw.split("\n")
-
-            for f in file_list:
-                if f and f.endswith((".md", ".jinja")):
-                    # Extract filename for Azure blob paths
-                    filename = f.split("/")[-1] if "/" in f else f
-                    source_files.append(filename)
+        source_files: List[str] = []
+        for f in raw_source_files:
+            if f and f.endswith((".md", ".jinja")):
+                filename = f.split("/")[-1] if "/" in f else f
+                source_files.append(filename)
 
         if not source_files:
             logger.error(

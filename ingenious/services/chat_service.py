@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Union
+from collections.abc import Mapping
+from typing import Any, AsyncIterator, Optional, Union
 
 from ingenious.config.main_settings import IngeniousSettings
 from ingenious.core.error_handling import operation_context
@@ -27,6 +28,30 @@ class IChatService(ABC):
         self, chat_request: ChatRequest
     ) -> AsyncIterator[ChatResponseChunk]:
         pass
+
+
+def _resolve_streaming_chunk_size(config: Any, default: int = 100) -> int:
+    """Best-effort lookup for streaming chunk size across config variants."""
+
+    def _extract(candidate: Any) -> Optional[int]:
+        size = getattr(candidate, "streaming_chunk_size", None)
+        return size if isinstance(size, int) and size > 0 else None
+
+    for attr in ("web_configuration", "web"):
+        candidate = getattr(config, attr, None)
+        if candidate is not None:
+            value = _extract(candidate)
+            if value is not None:
+                return value
+
+    if isinstance(config, Mapping):
+        for key in ("web_configuration", "web"):
+            if key in config and config[key] is not None:
+                value = _extract(config[key])
+                if value is not None:
+                    return value
+
+    return default
 
 
 class ChatService(IChatService):
@@ -144,9 +169,7 @@ class ChatService(IChatService):
 
             # Convert response to chunks
             if response.agent_response:
-                chunk_size = getattr(self.config, "web", {}).get(
-                    "streaming_chunk_size", 100
-                )
+                chunk_size = _resolve_streaming_chunk_size(self.config)
                 content = response.agent_response
 
                 for i in range(0, len(content), chunk_size):

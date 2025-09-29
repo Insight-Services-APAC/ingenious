@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from typing_extensions import Annotated
 
-import ingenious.utils.namespace_utils as ns_utils
 from ingenious.core.structured_logging import get_logger
 from ingenious.errors.content_filter_error import ContentFilterError
 from ingenious.errors.token_limit_exceeded_error import TokenLimitExceededError
@@ -18,14 +17,6 @@ from ingenious.services.fastapi_dependencies import (
 
 logger = get_logger(__name__)
 router = APIRouter()
-
-import os
-import sys
-
-parent_dir = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../../../../../..")
-)
-sys.path.append(parent_dir)
 
 
 @router.post(
@@ -46,9 +37,6 @@ async def chat(
         if not chat_request.user_id:
             chat_request.user_id = "unspecified_user"
 
-        ns_utils.print_namespace_modules(
-            "ingenious.services.chat_services.multi_agent.conversation_flows"
-        )
         if not chat_request.conversation_flow:
             raise ValueError(f"conversation_flow not set {chat_request}")
         return await chat_service.get_chat_response(chat_request)
@@ -109,9 +97,6 @@ async def chat_stream(
             if not chat_request.user_id:
                 chat_request.user_id = "unspecified_user"
 
-            ns_utils.print_namespace_modules(
-                "ingenious.services.chat_services.multi_agent.conversation_flows"
-            )
             if not chat_request.conversation_flow:
                 raise ValueError(f"conversation_flow not set {chat_request}")
 
@@ -175,7 +160,7 @@ async def chat_stream(
 
     return StreamingResponse(
         generate_stream(),
-        media_type="text/plain",
+        media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",

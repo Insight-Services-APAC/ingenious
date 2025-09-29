@@ -238,7 +238,7 @@ def validate_migration(env_file: Path) -> bool:
         parent_dir = Path(__file__).parent.parent
         sys.path.insert(0, str(parent_dir))
 
-        from ingenious.config.settings import IngeniousSettings
+        from ingenious.config import IngeniousSettings
 
         # Load settings with the new .env file
         settings = IngeniousSettings(_env_file=str(env_file))
@@ -340,7 +340,7 @@ Examples:
     else:
         print("\nMigration completed! To validate, run:")
         print(
-            f"  python -c \"from ingenious.config.settings import IngeniousSettings; IngeniousSettings(_env_file='{args.output}')\""
+            f"  python -c \"from ingenious.config import IngeniousSettings; IngeniousSettings(_env_file='{args.output}')\""
         )
 
     print("\nNext steps:")

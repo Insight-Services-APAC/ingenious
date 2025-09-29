@@ -5,7 +5,7 @@ from azure.cosmos import ContainerProxy, CosmosClient, PartitionKey
 
 from ingenious.client.azure import AzureClientFactory
 from ingenious.common.enums import AuthenticationMethod
-from ingenious.config.settings import IngeniousSettings
+from ingenious.config import IngeniousSettings
 from ingenious.core.structured_logging import get_logger
 from ingenious.db.chat_history_repository import IChatHistoryRepository
 from ingenious.errors import DatabaseQueryError

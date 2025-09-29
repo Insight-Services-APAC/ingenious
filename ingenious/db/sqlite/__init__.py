@@ -3,7 +3,7 @@ import os
 import sqlite3
 from typing import Any, Dict, List, Optional
 
-from ingenious.config.settings import IngeniousSettings
+from ingenious.config import IngeniousSettings
 
 # Future import placeholders for advanced error handling
 # from ingenious.core.error_handling import (

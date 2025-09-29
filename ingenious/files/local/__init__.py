@@ -69,7 +69,7 @@ class local_FileStorageRepository(IFileStorage):
             print(error_msg)
             return error_msg
 
-    async def list_files(self, file_path: str) -> str:
+    async def list_files(self, file_path: str) -> List[str]:
         """
         List files in a local directory.
 
@@ -78,12 +78,11 @@ class local_FileStorageRepository(IFileStorage):
         try:
             path = Path(self.fs_config.path) / Path(file_path)
             files = [f.name for f in path.iterdir() if f.is_file()]
-            # print(f"Files in {path}: {files}")
-            return str(files)
+            return files
         except Exception as e:
             error_msg = f"Failed to list files in {path}: {e}"
             print(error_msg)
-            return error_msg
+            return []
 
     async def list_directories(self, file_path: str) -> List[str]:
         """

@@ -13,7 +13,7 @@ from typing import (
 )
 from uuid import UUID
 
-from ingenious.config.settings import IngeniousSettings
+from ingenious.config import IngeniousSettings
 from ingenious.core.structured_logging import get_logger
 from ingenious.models.database_client import DatabaseClientType
 from ingenious.models.message import Message

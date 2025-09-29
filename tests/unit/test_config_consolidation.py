@@ -12,13 +12,13 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from ingenious.config.config import get_config
-from ingenious.config.settings import (
+from ingenious.config import (
     ChatHistorySettings,
     IngeniousSettings,
     LoggingSettings,
     ModelSettings,
     WebSettings,
+    get_config,
 )
 
 

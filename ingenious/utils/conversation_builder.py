@@ -8,7 +8,7 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from ingenious.config.settings import IngeniousSettings
+from ingenious.config import IngeniousSettings
 from ingenious.core.structured_logging import get_logger
 from ingenious.files.files_repository import FileStorage
 

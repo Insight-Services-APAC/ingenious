@@ -17,9 +17,11 @@ from autogen_core import (
 from autogen_core.logging import LLMCallEvent
 from autogen_core.models import FunctionExecutionResult
 from autogen_core.tools import Tool
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, PrivateAttr
 
-from ingenious.config import settings as ig_config
+from ingenious.config import IngeniousSettings, get_config
+
+ig_config = get_config()
 from ingenious.db.chat_history_repository import ChatHistoryRepository
 from ingenious.files.files_repository import FileStorage
 from ingenious.models.config import Config, ModelConfig
@@ -85,7 +87,7 @@ class AgentChats(BaseModel):
         A list of AgentChat objects.
     """
 
-    _agent_chats: List[AgentChat] = []
+    _agent_chats: List[AgentChat] = PrivateAttr(default_factory=list)
 
     def __init__(self) -> None:
         super().__init__()
@@ -139,12 +141,12 @@ class Agent(BaseModel):
     agent_display_name: str
     agent_description: str
     agent_type: str
-    input_topics: list[str] = []
+    input_topics: list[str] = Field(default_factory=list)
     model: Optional[ModelConfig] = None
     system_prompt: Optional[str] = None
     log_to_prompt_tuner: bool = True
     return_in_response: bool = False
-    agent_chats: list[AgentChat] = []
+    agent_chats: list[AgentChat] = Field(default_factory=list)
 
     def add_agent_chat(
         self,
@@ -278,7 +280,7 @@ class LLMUsageTracker(logging.Handler):
     def __init__(
         self,
         agents: Agents,
-        config: ig_config.IngeniousSettings,
+        config: IngeniousSettings,
         chat_history_repository: ChatHistoryRepository,
         revision_id: str,
         identifier: str,

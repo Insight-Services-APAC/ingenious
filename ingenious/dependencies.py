@@ -20,8 +20,8 @@ from typing_extensions import Annotated
 
 from ingenious.auth.jwt import get_username_from_token
 from ingenious.common.enums import AuthenticationMethod
+from ingenious.config import IngeniousSettings
 from ingenious.config.config import get_config as _get_config
-from ingenious.config.settings import IngeniousSettings
 from ingenious.core.structured_logging import get_logger
 from ingenious.db.chat_history_repository import ChatHistoryRepository
 from ingenious.errors import ConfigurationError

@@ -1,6 +1,7 @@
 import logging
 import uuid as uuid_module
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional
 
 from jinja2 import Environment
@@ -21,6 +22,30 @@ from ingenious.utils.namespace_utils import (
 )
 
 logger = get_logger(__name__)
+
+
+def _resolve_streaming_chunk_size(config: Any, default: int = 100) -> int:
+    """Best-effort lookup for streaming chunk size across config variants."""
+
+    def _extract(candidate: Any) -> Optional[int]:
+        size = getattr(candidate, "streaming_chunk_size", None)
+        return size if isinstance(size, int) and size > 0 else None
+
+    for attr in ("web_configuration", "web"):
+        candidate = getattr(config, attr, None)
+        if candidate is not None:
+            value = _extract(candidate)
+            if value is not None:
+                return value
+
+    if isinstance(config, Mapping):
+        for key in ("web_configuration", "web"):
+            if key in config and config[key] is not None:
+                value = _extract(config[key])
+                if value is not None:
+                    return value
+
+    return default
 
 
 class multi_agent_chat_service:
@@ -455,11 +480,7 @@ class multi_agent_chat_service:
                 response = await self.get_chat_response(chat_request)
 
                 if response.agent_response:
-                    chunk_size = 100  # Default chunk size
-                    if hasattr(self.config, "web") and hasattr(
-                        self.config.web, "streaming_chunk_size"
-                    ):
-                        chunk_size = self.config.web.streaming_chunk_size
+                    chunk_size = _resolve_streaming_chunk_size(self.config)
 
                     content = response.agent_response
 
@@ -672,11 +693,7 @@ class IConversationFlow(ABC):
         response = await self.get_conversation_response(chat_request)
 
         if response.agent_response:
-            chunk_size = 100  # Default chunk size
-            if hasattr(self._config, "web") and hasattr(
-                self._config.web, "streaming_chunk_size"
-            ):
-                chunk_size = self._config.web.streaming_chunk_size
+            chunk_size = _resolve_streaming_chunk_size(self._config)
 
             content = response.agent_response
 

@@ -30,7 +30,7 @@ class IFileStorage(ABC):
         pass
 
     @abstractmethod
-    async def list_files(self, file_path: str) -> str:
+    async def list_files(self, file_path: str) -> List[str]:
         """lists files in the file storage"""
         pass
 
@@ -95,7 +95,7 @@ class FileStorage:
     async def delete_file(self, file_name: str, file_path: str) -> str:
         return await self.repository.delete_file(file_name, file_path)
 
-    async def list_files(self, file_path: str) -> str:
+    async def list_files(self, file_path: str) -> List[str]:
         return await self.repository.list_files(file_path)
 
     async def list_directories(self, file_path: str) -> List[str]:
