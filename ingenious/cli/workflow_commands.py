@@ -62,8 +62,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 "category": "✅ Simple Text Processing",
                 "requirements": ["Azure OpenAI"],
                 "config_needed": [
-                    "config.yml: models, chat_service",
-                    "profiles.yml: models with api_key and base_url",
+                    "Environment: set INGENIOUS_MODELS__0__* (model, api_key, base_url)",
                 ],
                 "optional": [],
                 "example_curl": """curl -X POST http://localhost:80/api/v1/chat \\
@@ -79,8 +78,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 "category": "⭐ Hello World Workflow",
                 "requirements": ["Azure OpenAI"],
                 "config_needed": [
-                    "config.yml: models, chat_service",
-                    "profiles.yml: models with api_key and base_url",
+                    "Environment: set INGENIOUS_MODELS__0__* (model, api_key, base_url)",
                 ],
                 "optional": [],
                 "example_curl": """curl -X POST http://localhost:80/api/v1/chat \\
@@ -96,8 +94,8 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 "category": "🔍 Requires Azure Search",
                 "requirements": ["Azure OpenAI", "Azure Cognitive Search"],
                 "config_needed": [
-                    "config.yml: azure_search_services with endpoint",
-                    "profiles.yml: azure_search_services with API key",
+                    "Environment: configure INGENIOUS_MODELS__0__*",
+                    "Environment: configure INGENIOUS_AZURE_SEARCH_SERVICES__0__* (endpoint, key, index)",
                     "Pre-configured search indexes",
                 ],
                 "optional": [],
@@ -107,9 +105,8 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 "category": "📊 Requires Database",
                 "requirements": ["Azure OpenAI", "Database (Azure SQL or SQLite)"],
                 "config_needed": [
-                    "For Azure SQL: profiles.yml: azure_sql_services with connection_string",
-                    "For Local: config.yml: local_sql_db with database_path and CSV",
-                    "config.yml: azure_sql_services with database_name/table_name",
+                    "For Azure SQL: set INGENIOUS_AZURE_SQL_SERVICES__* values",
+                    "For Local SQLite: set INGENIOUS_LOCAL_SQL_DB__DATABASE_PATH (optional)",
                 ],
                 "optional": [],
             },
@@ -119,8 +116,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 "category": "✅ Simple Text Processing",
                 "requirements": ["Azure OpenAI"],
                 "config_needed": [
-                    "config.yml: models, chat_service",
-                    "profiles.yml: models with api_key and base_url",
+                    "Environment: set INGENIOUS_MODELS__0__* (model, api_key, base_url)",
                 ],
                 "optional": [],
                 "example_curl": """curl -X POST http://localhost:80/api/v1/chat \\
@@ -133,8 +129,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 "category": "⭐ Hello World Workflow",
                 "requirements": ["Azure OpenAI"],
                 "config_needed": [
-                    "config.yml: models, chat_service",
-                    "profiles.yml: models with api_key and base_url",
+                    "Environment: set INGENIOUS_MODELS__0__* (model, api_key, base_url)",
                 ],
                 "optional": [],
                 "example_curl": """curl -X POST http://localhost:80/api/v1/chat \\

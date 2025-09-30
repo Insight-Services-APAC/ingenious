@@ -11,14 +11,14 @@ import os
 import shutil
 from pathlib import Path
 from sysconfig import get_paths
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from rich.panel import Panel
 from rich.table import Table
 
 import ingenious.utils.stage_executor as stage_executor_module
 from ingenious.core.structured_logging import get_logger
-from ingenious.utils.namespace_utils import import_class_with_fallback
+from ingenious.utils.imports import import_class_with_fallback
 
 logger = get_logger(__name__)
 
@@ -102,55 +102,6 @@ class FileOperations:
             ) from e
 
     @staticmethod
-    def backup_file(
-        file_path: Union[str, Path], backup_suffix: str = ".bak"
-    ) -> Optional[Path]:
-        """
-        Create a backup of a file.
-
-        Args:
-            file_path: Path to the file to backup
-            backup_suffix: Suffix to add to the backup file
-
-        Returns:
-            Path to the backup file if successful, None otherwise
-        """
-        source = Path(file_path)
-        if not source.exists():
-            return None
-
-        backup_path = source.with_suffix(source.suffix + backup_suffix)
-        try:
-            shutil.copy2(source, backup_path)
-            return backup_path
-        except OSError as e:
-            logger.error(f"Failed to create backup of '{source}': {e}")
-            return None
-
-    @staticmethod
-    def safe_remove(path: Union[str, Path], description: str = "file") -> bool:
-        """
-        Safely remove a file or directory.
-
-        Args:
-            path: Path to remove
-            description: Description for logging
-
-        Returns:
-            True if removal was successful, False otherwise
-        """
-        path_obj = Path(path)
-        try:
-            if path_obj.is_file():
-                path_obj.unlink()
-            elif path_obj.is_dir():
-                shutil.rmtree(path_obj)
-            return True
-        except OSError as e:
-            logger.error(f"Failed to remove {description} '{path}': {e}")
-            return False
-
-    @staticmethod
     def copy_tree_safe(
         src: Union[str, Path], dst: Union[str, Path], overwrite: bool = False
     ) -> bool:
@@ -189,23 +140,6 @@ class FileOperations:
 
 class ValidationUtils:
     """Validation utilities for CLI commands."""
-
-    @staticmethod
-    def validate_file_extension(
-        file_path: Union[str, Path], expected_extensions: List[str]
-    ) -> bool:
-        """
-        Validate that a file has one of the expected extensions.
-
-        Args:
-            file_path: Path to the file
-            expected_extensions: List of valid extensions (e.g., ['.yml', '.yaml'])
-
-        Returns:
-            True if file has a valid extension, False otherwise
-        """
-        path = Path(file_path)
-        return path.suffix.lower() in [ext.lower() for ext in expected_extensions]
 
     @staticmethod
     def validate_port(port: Union[str, int]) -> tuple[bool, Optional[str]]:
@@ -310,66 +244,3 @@ class OutputFormatters:
             Rich Panel object
         """
         return Panel(content, title=title, border_style=style)
-
-
-class ConfigUtils:
-    """Configuration-related utilities."""
-
-    @staticmethod
-    def resolve_config_path(
-        explicit_path: Optional[str] = None, default_name: str = "config.yml"
-    ) -> Path:
-        """
-        Resolve configuration file path using fallback logic.
-
-        Args:
-            explicit_path: Explicitly provided path
-            default_name: Default config file name
-
-        Returns:
-            Resolved Path object
-        """
-        if explicit_path:
-            return Path(explicit_path)
-
-        # Try environment variable
-        env_var = (
-            "INGENIOUS_PROJECT_PATH"
-            if default_name == "config.yml"
-            else "INGENIOUS_PROFILE_PATH"
-        )
-        env_path = os.getenv(env_var)
-        if env_path:
-            return Path(env_path)
-
-        # Fall back to current directory
-        return Path.cwd() / default_name
-
-    @staticmethod
-    def load_env_file(env_path: Union[str, Path] = ".env") -> Dict[str, str]:
-        """
-        Load environment variables from a file.
-
-        Args:
-            env_path: Path to .env file
-
-        Returns:
-            Dictionary of environment variables
-        """
-        env_vars: Dict[str, str] = {}
-        env_file = Path(env_path)
-
-        if not env_file.exists():
-            return env_vars
-
-        try:
-            with open(env_file, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        key, value = line.split("=", 1)
-                        env_vars[key.strip()] = value.strip().strip("\"'")
-        except Exception as e:
-            logger.error(f"Failed to load environment file '{env_path}': {e}")
-
-        return env_vars

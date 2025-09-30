@@ -1058,33 +1058,6 @@ class DummyVectorizedQuery:
         self.exhaustive = exhaustive
 
 
-@pytest.fixture(autouse=True, scope="session")
-def _preseed_tool_factory_patch_targets() -> None:
-    """Ensure patch targets exist on the `tool_factory` module before tests run.
-
-    Some tests patch attributes on `tool_factory` that may not exist in the
-    production code depending on dependencies. This fixture pre-creates harmless
-    placeholders so `unittest.mock.patch` can successfully replace them
-    without causing `AttributeError`.
-    """
-    import importlib
-
-    tf = importlib.import_module(
-        "ingenious.services.chat_services.multi_agent.tool_factory"
-    )
-
-    if not hasattr(tf, "AzureSearchProvider"):
-        tf.AzureSearchProvider = object  # type: ignore[attr-defined]
-
-    if not hasattr(tf, "get_config"):
-
-        def _placeholder_get_config() -> None:
-            """A placeholder function that raises if called."""
-            raise RuntimeError("get_config placeholder: tests must patch this symbol.")
-
-        tf.get_config = _placeholder_get_config  # type: ignore[attr-defined]
-
-
 @pytest.fixture
 def mock_search_config(config: SearchConfig) -> SearchConfig:
     """Alias the suite's existing 'config' fixture to the name these tests expect."""

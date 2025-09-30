@@ -149,11 +149,7 @@ Set up ingenious locally first and then migrate to Azure services as shown in th
     uv run ingen validate
     ```
 
-    > **⚠️ BREAKING CHANGE**: Ingenious now uses **pydantic-settings** for configuration via environment variables. Legacy YAML configuration files (`config.yml`, `profiles.yml`) are **no longer supported** and must be migrated to environment variables with `INGENIOUS_` prefixes. Use the migration script:
-    > ```bash
-    > uv run python scripts/migrate_config.py --yaml-file config.yml --output .env
-    > uv run python scripts/migrate_config.py --yaml-file profiles.yml --output .env.profiles
-    > ```
+    > **⚠️ NOTE**: Ingenious now uses **pydantic-settings** for configuration via environment variables. Legacy YAML files are no longer supported—define configuration through `INGENIOUS_*` environment variables or `.env` files (e.g., `INGENIOUS_MODELS__0__API_KEY`, `INGENIOUS_MODELS__0__BASE_URL`).
 
 4. **Start the Server**:
     ```bash

@@ -23,12 +23,6 @@ from ingenious.utils.imports import (
     import_module_with_fallback,
     validate_dependencies,
 )
-from ingenious.utils.protocols import (
-    ChatServiceProtocol,
-    WorkflowProtocol,
-    get_protocol_by_name,
-    validate_protocol_compliance,
-)
 
 
 class TestSafeImporter:
@@ -242,47 +236,6 @@ class TestConvenienceFunctions:
         stats = get_import_stats()
         assert "modules_cached" in stats
         assert isinstance(stats["modules_cached"], int)
-
-
-class TestProtocols:
-    """Test protocol validation functionality."""
-
-    def test_protocol_registry(self):
-        """Test protocol registry functionality."""
-        protocol = get_protocol_by_name("workflow")
-        assert protocol is WorkflowProtocol
-
-        protocol = get_protocol_by_name("chat_service")
-        assert protocol is ChatServiceProtocol
-
-        protocol = get_protocol_by_name("nonexistent")
-        assert protocol is None
-
-    def test_validate_protocol_compliance_success(self):
-        """Test protocol compliance validation with compliant object."""
-
-        class MockChatService:
-            async def get_chat_response(self, chat_request):
-                return "response"
-
-        service = MockChatService()
-        # Note: This might not work perfectly due to Protocol runtime checking limitations
-        # but we test the function exists and can be called
-        result = validate_protocol_compliance(service, ChatServiceProtocol)
-        # Protocol compliance checking has limitations in Python, so we just test it doesn't crash
-        assert isinstance(result, bool)
-
-    def test_validate_protocol_compliance_failure(self):
-        """Test protocol compliance validation with non-compliant object."""
-
-        class MockIncompleteService:
-            def some_other_method(self):
-                pass
-
-        service = MockIncompleteService()
-        result = validate_protocol_compliance(service, ChatServiceProtocol)
-        # Should return False for non-compliant object
-        assert isinstance(result, bool)
 
 
 class TestErrorHandling:

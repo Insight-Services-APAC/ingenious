@@ -81,26 +81,25 @@ class TestUtilityCoverage:
         except ImportError:
             pytest.skip("token_counter not available")
 
-    def test_env_substitution_coverage(self):
-        """Test environment substitution edge cases"""
+    def test_settings_environment_loading(self):
+        """Ensure IngeniousSettings loads required model configuration from environment."""
         try:
-            from ingenious.utils.env_substitution import substitute_env_vars
+            from ingenious.config.main_settings import IngeniousSettings
 
-            # Test various substitution patterns
-            test_cases = [
-                ("${HOME}", True),
-                ("${NON_EXISTENT:default}", True),
-                ("${VAR1}${VAR2}", True),
-                ("No substitution", False),
-                ("", False),
-            ]
-
-            for test_input, should_change in test_cases:
-                result = substitute_env_vars(test_input)
-                assert isinstance(result, str)
+            with patch.dict(
+                os.environ,
+                {
+                    "AZURE_OPENAI_API_KEY": "test-key",
+                    "AZURE_OPENAI_BASE_URL": "https://example.openai.azure.com/",
+                },
+                clear=True,
+            ):
+                settings = IngeniousSettings()
+                assert settings.models
+                assert settings.models[0].api_key == "test-key"
 
         except ImportError:
-            pytest.skip("env_substitution not available")
+            pytest.skip("IngeniousSettings not available")
 
     def test_imports_module_coverage(self):
         """Test imports module functions"""
@@ -174,26 +173,6 @@ class TestUtilityCoverage:
 
 class TestServicesCoverage:
     """Tests to increase services module coverage"""
-
-    def test_container_coverage(self):
-        """Test container functionality"""
-        try:
-            from ingenious.services.container import get_container
-
-            # Test container instantiation
-            container = get_container()
-            assert container is not None
-
-            # Test that multiple calls return same instance
-            container2 = get_container()
-            assert container is container2
-
-            # Test container has expected providers
-            assert hasattr(container, "config")
-            assert hasattr(container, "logger")
-
-        except ImportError:
-            pytest.skip("Container not available")
 
     def test_message_feedback_service_coverage(self):
         """Test message feedback service"""
@@ -365,28 +344,25 @@ class TestCLICoverage:
 class TestConfigurationCoverage:
     """Tests to increase configuration module coverage"""
 
-    def test_config_profile_coverage(self):
-        """Test configuration profile functionality"""
+    def test_config_settings_coverage(self):
+        """Test that configuration settings can be loaded and validated."""
         try:
-            from ingenious.config.profile import Profile, ProfileManager
+            from ingenious.config import get_config
 
-            # Test profile creation
-            profile_data = {
-                "name": "test",
-                "description": "Test profile",
-                "model": {"name": "gpt-3.5-turbo"},
-            }
-
-            profile = Profile(**profile_data)
-            assert profile.name == "test"
-            assert profile.description == "Test profile"
-
-            # Test profile manager
-            manager = ProfileManager()
-            assert manager is not None
+            with patch.dict(
+                os.environ,
+                {
+                    "AZURE_OPENAI_API_KEY": "test-key",
+                    "AZURE_OPENAI_BASE_URL": "https://example.openai.azure.com/",
+                },
+                clear=True,
+            ):
+                cfg = get_config()
+                assert cfg.models
+                cfg.validate_configuration()
 
         except ImportError:
-            pytest.skip("Profile not available")
+            pytest.skip("Configuration modules not available")
 
     def test_main_middleware_coverage(self):
         """Test middleware functionality"""
@@ -442,7 +418,6 @@ class TestComprehensiveImports:
             "ingenious.core.structured_logging",
             "ingenious.models.message",
             "ingenious.models.config",
-            "ingenious.utils.protocols",
             "ingenious.utils.stage_executor",
             "ingenious.utils.log_levels",
             "ingenious.utils.model_utils",
@@ -450,7 +425,6 @@ class TestComprehensiveImports:
             "ingenious.utils.conversation_builder",
             "ingenious.utils.load_sample_data",
             "ingenious.services.fastapi_dependencies",
-            "ingenious.services.file_dependencies",
             "ingenious.main.routing",
         ]
 

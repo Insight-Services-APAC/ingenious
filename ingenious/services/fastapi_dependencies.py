@@ -6,7 +6,6 @@ from typing import Any
 from fastapi import Depends, Request
 
 from ingenious.common.enums import AuthenticationMethod
-from ingenious.config.config import get_config as _get_config
 from ingenious.config.main_settings import IngeniousSettings
 from ingenious.core.structured_logging import get_logger
 from ingenious.db.chat_history_repository import ChatHistoryRepository
@@ -22,7 +21,9 @@ logger = get_logger(__name__)
 # Cache the config to avoid reloading
 @lru_cache
 def get_config() -> IngeniousSettings:
-    """Get the application configuration."""
+    """Get the application configuration lazily to avoid heavy imports at module load."""
+    from ingenious.config.config import get_config as _get_config
+
     return _get_config()
 
 

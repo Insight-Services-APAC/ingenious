@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **ingenious** package - a core AI agent framework library (v0.2.7).
 
+## Communication Style
+
+**CRITICAL**: When working with this codebase:
+- **NEVER use emojis** in any communication, code, comments, or documentation
+- **Always maintain a concise, professional tone** in all interactions
+- Provide direct, clear technical communication without unnecessary elaboration
+- Focus on facts and technical accuracy over conversational language
+
 ## Package Management
 
 Uses **uv** for Python package and environment management. Python 3.13+ is required.
@@ -57,7 +65,7 @@ uv build
 - **FastAPI Server** (`ingenious/main/app_factory.py`) - Main API application factory using dependency injection
 - **Multi-Agent System** (`ingenious/services/chat_services/multi_agent/`) - AutoGen-based agent orchestration
 - **Conversation Flows** (`services/chat_services/multi_agent/conversation_flows/`) - Pluggable workflow patterns
-- **Dependency Injection** (`ingenious/services/container.py`) - Uses dependency-injector for IoC container
+- **Dependency Injection** (`ingenious/services/fastapi_dependencies.py`) - FastAPI-native dependency wiring
 - **Configuration** - Pydantic-settings based (`ingenious/config/`) with `INGENIOUS_*` environment variables
 
 ### Built-in Conversation Flows
@@ -149,7 +157,7 @@ INGENIOUS_LOCAL_SQL_DB__DATABASE_PATH=./.tmp/sample_sql.db
 - **KB_POLICY**: Essential for knowledge-base-agent functionality. Use `KB_POLICY=local_only` for development
 - **Port Conflicts**: Always use port 8000 to avoid conflicts with system port 80
 
-Legacy YAML migration: `uv run python scripts/migrate_config.py --yaml-file config.yml --output .env`
+Configuration now relies on environment variables (`INGENIOUS_*`). Ensure `.env` is populated instead of using legacy YAML files.
 
 ## Development Workflow
 

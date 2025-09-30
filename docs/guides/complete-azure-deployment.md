@@ -129,11 +129,10 @@ INGENIOUS_FILE_STORAGE__REVISIONS__STORAGE_TYPE=local
 
 #### Azure Production Configuration (Target)
 ```bash
-# Azure SQL Database
+# Azure SQL Database for Chat History
 INGENIOUS_CHAT_HISTORY__DATABASE_TYPE=azuresql
-INGENIOUS_AZURE_SQL_SERVICES__DATABASE_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:your-sql-server.database.windows.net,1433;Database=ingenious-db;Uid=adminuser;Pwd=YOUR_PASSWORD;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;
-INGENIOUS_AZURE_SQL_SERVICES__DATABASE_NAME=ingenious-db
-INGENIOUS_AZURE_SQL_SERVICES__TABLE_NAME=chat_history
+INGENIOUS_CHAT_HISTORY__DATABASE_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:your-sql-server.database.windows.net,1433;Database=ingenious-db;Uid=adminuser;Pwd=YOUR_PASSWORD;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;
+INGENIOUS_CHAT_HISTORY__DATABASE_NAME=ingenious-db
 
 # Azure Blob Storage for prompt templates
 INGENIOUS_FILE_STORAGE__REVISIONS__ENABLE=true
@@ -153,9 +152,8 @@ INGENIOUS_CHAT_SERVICE__ENABLE_BUILTIN_WORKFLOWS=false
 |----------|-------------|-------------|-------------|
 | `INGENIOUS_CHAT_HISTORY__DATABASE_TYPE` | `sqlite` | `azuresql` | Database backend type |
 | `INGENIOUS_CHAT_HISTORY__DATABASE_PATH` | `./.tmp/chat_history.db` | (remove) | Local SQLite path |
-| `INGENIOUS_AZURE_SQL_SERVICES__DATABASE_CONNECTION_STRING` | (not needed) | `Driver={ODBC...}` | Azure SQL connection |
-| `INGENIOUS_AZURE_SQL_SERVICES__DATABASE_NAME` | (not needed) | `ingenious-db` | Azure SQL database name |
-| `INGENIOUS_AZURE_SQL_SERVICES__TABLE_NAME` | (not needed) | `chat_history` | Azure SQL table name |
+| `INGENIOUS_CHAT_HISTORY__DATABASE_CONNECTION_STRING` | (not needed) | `Driver={ODBC...}` | Azure SQL connection for chat history |
+| `INGENIOUS_CHAT_HISTORY__DATABASE_NAME` | (not needed) | `ingenious-db` | Azure SQL database name for chat history |
 | `INGENIOUS_FILE_STORAGE__REVISIONS__ENABLE` | `false` | `true` | Enable cloud file storage |
 | `INGENIOUS_FILE_STORAGE__REVISIONS__STORAGE_TYPE` | `local` | `azure` | Storage backend type |
 | `INGENIOUS_FILE_STORAGE__REVISIONS__CONTAINER_NAME` | (not needed) | `prompts` | Blob container name |

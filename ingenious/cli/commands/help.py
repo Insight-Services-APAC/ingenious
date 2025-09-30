@@ -58,11 +58,11 @@ class HelpCommand(BaseCommand):
             ("1. Initialize a new project:", "ingen init"),
             (
                 "2. Configure your project:",
-                "• Copy .env.example to .env and add your API keys\n   • Update config.yml and profiles.yml as needed",
+                "• Copy .env.example to .env and add your API keys\n   • Set INGENIOUS_MODELS__0__* entries for your model",
             ),
             (
                 "3. Set environment variables:",
-                "export INGENIOUS_PROJECT_PATH=$(pwd)/config.yml\n   export INGENIOUS_PROFILE_PATH=$(pwd)/profiles.yml",
+                "export INGENIOUS_MODELS__0__API_KEY=your-key\n   export INGENIOUS_MODELS__0__BASE_URL=https://your-endpoint",
             ),
             ("4. Start the server:", "ingen serve"),
             (
@@ -99,10 +99,8 @@ class HelpCommand(BaseCommand):
             "To set up your Insight Ingenious project:\n\n"
             "1. Run `ingen init` to generate project files\n"
             "2. Configure API keys and settings in `.env`\n"
-            "3. Update `config.yml` and `profiles.yml` as needed\n"
-            "4. Set environment variables:\n"
-            "   export INGENIOUS_PROJECT_PATH=$(pwd)/config.yml\n"
-            "   export INGENIOUS_PROFILE_PATH=$(pwd)/profiles.yml\n"
+            "3. Set INGENIOUS_MODELS__0__* environment variables for your model\n"
+            "4. Optionally provide a custom .env file with `ingen serve --env-file`\n"
             "5. Start the server with `ingen serve`"
         )
 
@@ -123,9 +121,9 @@ class HelpCommand(BaseCommand):
     def _show_config_help(self) -> None:
         """Show configuration-specific help."""
         content = (
-            "Configuration is split between two files:\n"
-            "• config.yml - Non-sensitive project settings\n"
-            "• profiles.yml - API keys and sensitive configuration"
+            "Configuration is managed through environment variables:\n"
+            "• .env / .env.local - Primary configuration sources\n"
+            "• INGENIOUS_MODELS__* - Model and service settings"
         )
 
         panel = Panel(content, title="⚙️  Configuration Guide", border_style="blue")
@@ -178,49 +176,39 @@ class StatusCommand(BaseCommand):
 
     def _check_environment_variables(self, status_items: dict[str, object]) -> None:
         """Check environment variables status."""
-        project_path = os.getenv("INGENIOUS_PROJECT_PATH")
-        profile_path = os.getenv("INGENIOUS_PROFILE_PATH")
+        required_env_sets = {
+            "Model API key": [
+                "INGENIOUS_MODELS__0__API_KEY",
+                "AZURE_OPENAI_API_KEY",
+            ],
+            "Model base URL": [
+                "INGENIOUS_MODELS__0__BASE_URL",
+                "AZURE_OPENAI_BASE_URL",
+            ],
+            "Model name": [
+                "INGENIOUS_MODELS__0__MODEL",
+                "AZURE_OPENAI_MODEL",
+            ],
+        }
 
-        if project_path:
-            if Path(project_path).exists():
-                status_items["INGENIOUS_PROJECT_PATH"] = {
+        for label, candidates in required_env_sets.items():
+            value = next((os.getenv(var) for var in candidates if os.getenv(var)), None)
+            if value:
+                status_items[label] = {
                     "status": "OK",
-                    "details": project_path,
+                    "details": f"Provided via {next(var for var in candidates if os.getenv(var))}",
                 }
             else:
-                status_items["INGENIOUS_PROJECT_PATH"] = {
-                    "status": "Warning",
-                    "details": f"File not found: {project_path}",
+                status_items[label] = {
+                    "status": "Missing",
+                    "details": f"Set one of: {', '.join(candidates)}",
                 }
-        else:
-            status_items["INGENIOUS_PROJECT_PATH"] = {
-                "status": "Missing",
-                "details": "Environment variable not set",
-            }
-
-        if profile_path:
-            if Path(profile_path).exists():
-                status_items["INGENIOUS_PROFILE_PATH"] = {
-                    "status": "OK",
-                    "details": profile_path,
-                }
-            else:
-                status_items["INGENIOUS_PROFILE_PATH"] = {
-                    "status": "Warning",
-                    "details": f"File not found: {profile_path}",
-                }
-        else:
-            status_items["INGENIOUS_PROFILE_PATH"] = {
-                "status": "Missing",
-                "details": "Environment variable not set",
-            }
 
     def _check_local_files(self, status_items: dict[str, object]) -> None:
         """Check local configuration files."""
         files_to_check = {
-            "config.yml": Path.cwd() / "config.yml",
-            "profiles.yml": Path.cwd() / "profiles.yml",
             ".env": Path.cwd() / ".env",
+            ".env.example": Path.cwd() / ".env.example",
         }
 
         for name, path in files_to_check.items():
@@ -242,8 +230,9 @@ class StatusCommand(BaseCommand):
 
         if has_issues:
             recommendations = [
-                "export INGENIOUS_PROJECT_PATH=$(pwd)/config.yml",
-                "export INGENIOUS_PROFILE_PATH=$(pwd)/profiles.yml",
+                "cp .env.example .env  # Create local environment file",
+                "export INGENIOUS_MODELS__0__API_KEY=your-key",
+                "export INGENIOUS_MODELS__0__BASE_URL=https://your-endpoint",
             ]
 
             if any("Missing" in str(item) for item in status_items.values()):
@@ -945,8 +934,8 @@ class ValidateCommand(BaseCommand):
                     [
                         "• Missing files: ingen init",
                         "• Set environment variables:",
-                        "  export INGENIOUS_PROJECT_PATH=$(pwd)/config.yml",
-                        "  export INGENIOUS_PROFILE_PATH=$(pwd)/profiles.yml",
+                        "  export INGENIOUS_MODELS__0__API_KEY=your-key",
+                        "  export INGENIOUS_MODELS__0__BASE_URL=https://your-endpoint",
                     ]
                 )
 

@@ -127,7 +127,7 @@ class Agent(BaseModel):
     agent_name : str
         The name of the agent.
     agent_model_name : str
-        The name of the model associated with the agent. This should match the name of the associated model in config.yml
+        The name of the model associated with the agent. This should match the name defined in the environment configuration.
     agent_display_name : str
         The display name of the agent.
     agent_description : str
@@ -232,7 +232,7 @@ class Agents(BaseModel):
                     break
             if not agent.model:
                 raise ValueError(
-                    f"Model {agent.agent_model_name} not found in config.yml"
+                    f"Model {agent.agent_model_name} not found in environment configuration"
                 )
 
     def get_agents(self) -> List[Agent]:

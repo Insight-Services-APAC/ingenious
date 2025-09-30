@@ -2,17 +2,36 @@
 
 ## Instructions
 
-1. **Assess the scope of changes**
+1. **Security Check: Scan for secrets**
+    - **CRITICAL**: Before committing, scan all staged files for potential secrets:
+      - API keys, tokens, passwords
+      - Private keys, certificates
+      - Connection strings, database credentials
+      - AWS/Azure/GCP credentials
+      - Environment files (.env, .env.local, etc.)
+      - Configuration files with sensitive data
+    - Use `git diff --cached` to review staged changes
+    - Check for patterns like:
+      - `API_KEY=`, `PASSWORD=`, `SECRET=`, `TOKEN=`
+      - Private key headers (BEGIN RSA PRIVATE KEY, etc.)
+      - Base64-encoded strings that might be credentials
+    - **If secrets are found**: Remove them immediately, use environment variables or secret management instead
+    - **NEVER commit or push files containing secrets**
+
+2. **Assess the scope of changes**
     - If there are extensive changes, break them into logical groups
     - Each commit should represent a cohesive set of related changes
     - Consider grouping by: feature, bug fix, refactoring, documentation, tests
 
-2. **Write a concise and descriptive git commit message**
+3. **Write a concise and descriptive git commit message**
     - Summarize the changes made.
     - Use the imperative mood (e.g., "Add feature", "Fix bug", "Update docs").
     - Keep the first line under 72 characters.
+    - **NEVER include emojis in commit messages**
+    - **Maintain a concise, professional tone**
+    - **DO NOT add attribution footers** (e.g., no "Generated with Claude Code" or "Co-Authored-By: Claude")
 
-3. **Commit your changes**
+4. **Commit your changes**
     - For small changes:
       ```sh
       git add .
@@ -25,7 +44,7 @@
       # Repeat for each logical group
       ```
 
-4. **Push your commits to the remote repository**
+5. **Push your commits to the remote repository**
     ```sh
     git push
     ```

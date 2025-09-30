@@ -16,10 +16,8 @@ from ingenious.db.chat_history_repository import ChatHistoryRepository
 from ingenious.errors.content_filter_error import ContentFilterError
 from ingenious.files.files_repository import FileStorage
 from ingenious.models.chat import ChatResponseChunk, IChatRequest, IChatResponse
-from ingenious.utils.namespace_utils import (
-    import_class_with_fallback,
-    normalize_workflow_name,
-)
+from ingenious.utils.imports import import_class_with_fallback
+from ingenious.utils.namespace_utils import normalize_workflow_name
 
 logger = get_logger(__name__)
 

@@ -3,23 +3,16 @@ Namespace utilities for dynamic imports and workflow discovery.
 
 This module provides utilities for working with namespaces, discovering workflows,
 and handling dynamic imports across the Ingenious ecosystem with proper fallback support.
-
-DEPRECATED FUNCTIONS:
-- import_module_safely: Use ingenious.utils.imports.import_module_safely instead
-- import_class_safely: Use ingenious.utils.imports.import_class_safely instead
-- import_module_with_fallback: Use ingenious.utils.imports.import_module_with_fallback instead
-- import_class_with_fallback: Use ingenious.utils.imports.import_class_with_fallback instead
 """
 
 import os
 import pkgutil
-import sys
 from pathlib import Path
 from sysconfig import get_paths
 from typing import Any, Dict, List, Optional, Set
 
 from ingenious.core.structured_logging import get_logger
-from ingenious.utils.imports import SafeImporter, _deprecated_import_warning
+from ingenious.utils.imports import SafeImporter
 
 logger = get_logger(__name__)
 
@@ -408,70 +401,3 @@ def discover_workflows(
 def get_workflow_metadata(workflow_name: str) -> Dict[str, Any]:
     """Get metadata for a specific workflow."""
     return _workflow_discovery.get_workflow_metadata(workflow_name)
-
-
-# DEPRECATED FUNCTIONS - Issue warnings and delegate to new implementation
-def import_module_safely(module_name: str, class_name: str) -> Any:
-    """
-    DEPRECATED: Use ingenious.utils.imports.import_class_safely instead.
-    """
-    _deprecated_import_warning("import_module_safely", "import_class_safely")
-
-    if not sys.modules.get(module_name):
-        try:
-            from ingenious.utils.imports import import_class_safely
-
-            return import_class_safely(module_name, class_name)
-        except Exception as e:
-            raise ValueError(
-                f"Unsupported module import: {module_name}.{class_name}"
-            ) from e
-    else:
-        from ingenious.utils.imports import import_class_safely
-
-        return import_class_safely(module_name, class_name)
-
-
-def import_class_safely(module_name: str, class_name: str) -> Any:
-    """
-    DEPRECATED: Use ingenious.utils.imports.import_class_safely instead.
-    """
-    _deprecated_import_warning(
-        "import_class_safely", "ingenious.utils.imports.import_class_safely"
-    )
-
-    from ingenious.utils.imports import import_class_safely as new_import_class_safely
-
-    return new_import_class_safely(module_name, class_name)
-
-
-def import_module_with_fallback(module_name: str) -> Any:
-    """
-    DEPRECATED: Use ingenious.utils.imports.import_module_with_fallback instead.
-    """
-    _deprecated_import_warning(
-        "import_module_with_fallback",
-        "ingenious.utils.imports.import_module_with_fallback",
-    )
-
-    from ingenious.utils.imports import (
-        import_module_with_fallback as new_import_module_with_fallback,
-    )
-
-    return new_import_module_with_fallback(module_name)
-
-
-def import_class_with_fallback(module_name: str, class_name: str) -> Any:
-    """
-    DEPRECATED: Use ingenious.utils.imports.import_class_with_fallback instead.
-    """
-    _deprecated_import_warning(
-        "import_class_with_fallback",
-        "ingenious.utils.imports.import_class_with_fallback",
-    )
-
-    from ingenious.utils.imports import (
-        import_class_with_fallback as new_import_class_with_fallback,
-    )
-
-    return new_import_class_with_fallback(module_name, class_name)

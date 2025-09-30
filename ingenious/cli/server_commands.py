@@ -49,20 +49,12 @@ def register_commands(app: typer.Typer, console: Console) -> None:
 
     @app.command(name="serve", help="Start the API server with web interface")
     def serve(
-        config: Annotated[
+        env_file: Annotated[
             Optional[str],
             typer.Option(
-                "--config",
-                "-c",
-                help="Path to config.yml file (default: ./config.yml or $INGENIOUS_PROJECT_PATH)",
-            ),
-        ] = None,
-        profile: Annotated[
-            Optional[str],
-            typer.Option(
-                "--profile",
-                "-p",
-                help="Path to profiles.yml file (default: ./profiles.yml or $INGENIOUS_PROFILE_PATH)",
+                "--env-file",
+                "-e",
+                help="Path to a .env file (default: auto-discover .env in working directory)",
             ),
         ] = None,
         host: Annotated[
@@ -114,8 +106,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
         For detailed configuration: ingen workflows --help
         """
         return run_rest_api_server(
-            project_dir=config,
-            profile_dir=profile,
+            env_file=env_file,
             host=host,
             port=port,
         )
@@ -123,14 +114,10 @@ def register_commands(app: typer.Typer, console: Console) -> None:
     # Keep old command for backward compatibility
     @app.command(hidden=True)
     def run_rest_api_server(
-        project_dir: Annotated[
-            Optional[str],
-            typer.Argument(help="The path to the config file. "),
-        ] = None,
-        profile_dir: Annotated[
+        env_file: Annotated[
             Optional[str],
             typer.Argument(
-                help="The path to the profile file. If left blank it will use './profiles.yml' if it exists, otherwise '$HOME/.ingenious/profiles.yml'"
+                help="Optional path to a .env file. Uses default dotenv discovery when omitted."
             ),
         ] = None,
         host: Annotated[
@@ -175,48 +162,27 @@ def register_commands(app: typer.Typer, console: Console) -> None:
             "conversation_flow": "bike-insights"
           }'
         """
-        if project_dir is not None:
-            os.environ["INGENIOUS_PROJECT_PATH"] = project_dir
-        elif os.getenv("INGENIOUS_PROJECT_PATH") is None:
-            # Default to config.yml in current directory
-            default_config_path = Path.cwd() / "config.yml"
-            if default_config_path.exists():
-                os.environ["INGENIOUS_PROJECT_PATH"] = str(default_config_path)
+        if env_file:
+            env_path = Path(env_file).expanduser().resolve()
+            if env_path.exists():
+                load_dotenv(env_path, override=True)
                 logger.info(
-                    "Using default config path",
-                    config_path=str(default_config_path),
-                    operation="config_discovery",
-                )
-
-        # Profiles.yml is deprecated - prioritize .env configuration
-        # Only use profiles.yml if explicitly provided via CLI argument
-        if profile_dir is not None:
-            # Explicit profile path provided via CLI
-            profile_dir = str(Path(profile_dir))
-            if os.path.exists(profile_dir):
-                logger.info(
-                    "Using explicitly provided profiles.yml",
-                    profile_path=str(profile_dir),
-                    operation="profile_setup",
-                )
-                os.environ["INGENIOUS_PROFILE_PATH"] = str(profile_dir).replace(
-                    "\\", "/"
+                    "Loaded environment file",
+                    env_file=str(env_path),
+                    operation="environment_setup",
                 )
             else:
                 logger.warning(
-                    "Specified profiles.yml not found, using .env configuration only",
-                    profile_path=str(profile_dir),
-                    operation="profile_setup",
+                    "Specified .env file not found, continuing with default environment",
+                    env_file=str(env_path),
+                    operation="environment_setup",
                 )
         else:
-            # No explicit profile specified - skip profiles.yml and use .env only
-            logger.info(
-                "Profiles.yml is deprecated. Using .env configuration only.",
-                operation="profile_setup",
+            load_dotenv(override=True)
+            logger.debug(
+                "Loaded environment variables using default .env discovery",
+                operation="environment_setup",
             )
-            # Ensure INGENIOUS_PROFILE_PATH is not set to avoid legacy loading
-            if "INGENIOUS_PROFILE_PATH" in os.environ:
-                del os.environ["INGENIOUS_PROFILE_PATH"]
 
         config = get_config()
 
@@ -234,9 +200,16 @@ def register_commands(app: typer.Typer, console: Console) -> None:
         # As soon as we import FastAgentAPI, config will be loaded hence to ensure that the environment variables above are loaded first we need to import FastAgentAPI after setting the environment variables
 
         os.environ["LOADENV"] = "False"
-        console.print(
-            f"Running all elements of the project in {project_dir}", style="info"
-        )
+        if env_file:
+            console.print(
+                f"Running Ingenious using environment file {env_file}",
+                style="info",
+            )
+        else:
+            console.print(
+                "Running Ingenious using environment variables (dotenv auto-discovery)",
+                style="info",
+            )
         # If the code has been pip installed then recursively copy the ingenious folder into the site-packages directory
         if CliFunctions.PureLibIncludeDirExists():
             src = Path(os.getcwd()) / Path("ingenious/")

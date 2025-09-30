@@ -24,7 +24,6 @@ requires-python = ">=3.13"
 dependencies = [
   "aiofiles>=24.1.0",
   "aiohttp==3.12.15",
-  "dependency-injector==4.48.1",
   "fastapi==0.115.9",
   "pydantic==2.11.5",
   "pydantic-settings>=2.10.1",
@@ -63,7 +62,6 @@ dev = [
   "twine>=6.0.0",
   "types-markdown>=3.8.0.20250708",
   "types-psutil>=7.0.0.20250601",
-  "types-pyyaml>=6.0.12.20250516",
   "types-requests>=2.32.4.20250611",
   "vulture>=2.14",
 ]
@@ -190,7 +188,6 @@ test = [
   "twine==6.0.0",
   "types-markdown==3.8.0.20250708",
   "types-psutil==7.0.0.20250601",
-  "types-pyyaml==6.0.12.20250516",
   "types-requests==2.32.4.20250611",
   "vulture==2.14",
   "reportlab==4.4.2",

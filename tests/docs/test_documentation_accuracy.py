@@ -264,13 +264,6 @@ class TestDocumentationAccuracy:
             f"Python version requirement mismatch: {pyproject_info['python_version']}"
         )
 
-    def test_migration_script_exists(self, validator):
-        """Verify migration script mentioned in docs exists."""
-        migration_script = validator.workspace_root / "scripts" / "migrate_config.py"
-        assert migration_script.exists(), (
-            "Migration script not found at scripts/migrate_config.py"
-        )
-
     def test_project_structure_matches_docs(self, validator):
         """Verify key project directories exist as documented."""
         expected_dirs = [

@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
-import ingenious.dependencies as ingen_deps
 from ingenious.core.structured_logging import get_logger
 from ingenious.files.files_repository import FileStorage
+from ingenious.services import fastapi_dependencies as ingen_deps
 from ingenious.utils.namespace_utils import discover_workflows, normalize_workflow_name
 from ingenious.utils.revision_names import generate_revision_id, normalize_revision_id
 

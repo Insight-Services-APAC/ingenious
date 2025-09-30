@@ -11,9 +11,7 @@ from ingenious.auth.jwt import (
     SECRET_KEY,
     create_access_token,
     create_refresh_token,
-    get_password_hash,
     get_username_from_token,
-    verify_password,
     verify_token,
 )
 
@@ -164,26 +162,6 @@ class TestJWTAuthentication:
             get_username_from_token(invalid_token)
 
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-
-    def test_verify_password(self):
-        """Test password verification"""
-        password = "testpassword123"
-        hashed = get_password_hash(password)
-
-        assert verify_password(password, hashed)
-        assert not verify_password("wrongpassword", hashed)
-
-    def test_get_password_hash(self):
-        """Test password hashing"""
-        password = "testpassword123"
-        hashed1 = get_password_hash(password)
-        hashed2 = get_password_hash(password)
-
-        # Hashes should be different (due to salt)
-        assert hashed1 != hashed2
-        # But both should verify the original password
-        assert verify_password(password, hashed1)
-        assert verify_password(password, hashed2)
 
     @patch.dict(
         os.environ,

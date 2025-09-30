@@ -22,8 +22,7 @@ class ServeCommand(BaseCommand):
 
     def execute(
         self,
-        config: Optional[str] = None,
-        profile: Optional[str] = None,
+        env_file: Optional[str] = None,
         host: str = "127.0.0.1",
         port: Optional[int] = None,
         no_prompt_tuner: bool = False,
@@ -33,8 +32,7 @@ class ServeCommand(BaseCommand):
         Start the Insight Ingenious API server with web interface.
 
         Args:
-            config: Path to config.yml file
-            profile: Path to profiles.yml file
+            env_file: Optional path to a .env file to load before starting
             host: Host to bind the server
             port: Port to bind the server
             no_prompt_tuner: Whether to disable the prompt tuner interface
@@ -48,11 +46,11 @@ class ServeCommand(BaseCommand):
         if not is_valid_port:
             raise CommandError(f"Invalid port: {port_error}", ExitCode.VALIDATION_ERROR)
 
-        # Validate configuration paths
+        # Load optional environment file before starting the server
         try:
-            self.validate_config_paths(config, profile)
+            self.load_env_file(env_file)
         except CommandError:
-            self.print_error("Configuration validation failed")
+            self.print_error("Failed to load environment configuration")
             self._show_config_help()
             raise
 
@@ -90,12 +88,16 @@ class ServeCommand(BaseCommand):
         self.console.print(
             "\n[bold yellow]💡 Configuration Requirements:[/bold yellow]"
         )
-        self.console.print("1. Set environment variables:")
-        self.console.print("   export INGENIOUS_PROJECT_PATH=$(pwd)/config.yml")
-        self.console.print("   export INGENIOUS_PROFILE_PATH=$(pwd)/profiles.yml")
-        self.console.print("2. Ensure config files exist:")
-        self.console.print("   Run: ingen init")
-        self.console.print("3. Configure Azure OpenAI credentials in .env")
+        self.console.print("1. Copy .env.example to .env and fill in required values")
+        self.console.print("   cp .env.example .env")
+        self.console.print("2. Set required INGENIOUS_* environment variables, e.g.")
+        self.console.print("   export INGENIOUS_MODELS__0__API_KEY=your-key")
+        self.console.print(
+            "   export INGENIOUS_MODELS__0__BASE_URL=https://your-endpoint"
+        )
+        self.console.print(
+            "3. Optionally use --env-file to load a specific .env configuration"
+        )
 
 
 # Backward compatibility
@@ -105,20 +107,11 @@ def register_commands(app: typer.Typer, console: Console) -> None:
 
     @app.command(name="serve", help="Start the API server with web interface")
     def serve(
-        config: Annotated[
+        env_file: Annotated[
             Optional[str],
             typer.Option(
-                "--config",
-                "-c",
-                help="Path to config.yml file (default: ./config.yml or $INGENIOUS_PROJECT_PATH)",
-            ),
-        ] = None,
-        profile: Annotated[
-            Optional[str],
-            typer.Option(
-                "--profile",
-                "-p",
-                help="Path to profiles.yml file (default: ./profiles.yml or $INGENIOUS_PROFILE_PATH)",
+                "--env-file",
+                help="Path to a .env file (default: auto-discover .env in working directory)",
             ),
         ] = None,
         host: Annotated[
@@ -143,8 +136,7 @@ def register_commands(app: typer.Typer, console: Console) -> None:
         """Start the Insight Ingenious API server with web interface."""
         cmd = ServeCommand(console)
         cmd.run(
-            config=config,
-            profile=profile,
+            env_file=env_file,
             host=host,
             port=port,
             no_prompt_tuner=no_prompt_tuner,

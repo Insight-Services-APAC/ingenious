@@ -60,9 +60,6 @@ def test_serve_env_port_precedence(tmp_path: Path, monkeypatch: MonkeyPatch) -> 
     argument, the port is sourced from the `WEB_PORT` environment variable,
     demonstrating correct precedence of environment variables over defaults.
     """
-    # Ensure a clean slate for env flags that the command may tweak
-    monkeypatch.delenv("INGENIOUS_PROFILE_PATH", raising=False)
-
     # Set ENV before registering commands (default evaluated at declaration time)
     monkeypatch.setenv("WEB_PORT", "1234")
 
@@ -92,8 +89,6 @@ def test_serve_env_port_precedence(tmp_path: Path, monkeypatch: MonkeyPatch) -> 
         assert kwargs["host"] == "0.0.0.0"
         assert kwargs["port"] == 1234
 
-        # Profiles.yml should be unset by default path
-        assert "INGENIOUS_PROFILE_PATH" not in os.environ
         # LOADENV flipped
         assert os.environ.get("LOADENV") == "False"
 
@@ -105,9 +100,6 @@ def test_serve_cli_port_overrides_env(tmp_path: Path, monkeypatch: MonkeyPatch) 
     to the `serve` command, their values take precedence over any conflicting
     settings from environment variables, ensuring direct user input is respected.
     """
-    # Ensure a clean slate for env flags that the command may tweak
-    monkeypatch.delenv("INGENIOUS_PROFILE_PATH", raising=False)
-
     # ENV present, but CLI overrides
     monkeypatch.setenv("WEB_PORT", "1234")
 
@@ -136,30 +128,22 @@ def test_serve_cli_port_overrides_env(tmp_path: Path, monkeypatch: MonkeyPatch) 
         assert kwargs["host"] == "127.0.0.1"
         assert kwargs["port"] == 9999
 
-        # Profiles path remains unset unless explicitly provided
-        assert "INGENIOUS_PROFILE_PATH" not in os.environ
+        # ensure server called
+        uv_run.assert_called_once()
 
 
-def test_serve_explicit_profile_path_handling(
-    tmp_path: Path, monkeypatch: MonkeyPatch
-) -> None:
-    """Test that the --profile argument sets the profile path environment variable.
+def test_serve_env_file_loading(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """Test that providing --env-file triggers dotenv loading with the given path."""
 
-    This verifies that providing a path via the `--profile` command-line
-    argument correctly sets the `INGENIOUS_PROFILE_PATH` environment
-    variable, which is used by the configuration system to locate the
-    `profiles.yml` file.
-    """
-    # Ensure a clean slate
-    monkeypatch.delenv("INGENIOUS_PROFILE_PATH", raising=False)
+    env_file: Path = tmp_path / ".env.runtime"
+    env_file.write_text("CUSTOM_ENV=from-file\n")
 
-    # Prepare a fake profiles.yml file
-    profiles: Path = tmp_path / "profiles.yml"
-    profiles.write_text("name: test")
+    monkeypatch.delenv("CUSTOM_ENV", raising=False)
 
     app: typer.Typer = make_app_and_register()
 
     with (
+        patch("ingenious.cli.server_commands.load_dotenv") as mock_load_dotenv,
         patch(
             "ingenious.cli.server_commands.get_config", return_value=stub_config()
         ) as get_cfg,
@@ -168,16 +152,28 @@ def test_serve_explicit_profile_path_handling(
         ) as make_app_mock,
         patch("ingenious.cli.server_commands.uvicorn.run") as uv_run,
     ):
-        result: Result = runner.invoke(app, ["serve", "--profile", str(profiles)])
+
+        def _fake_load(path=None, override=True):
+            if path:
+                os.environ["CUSTOM_ENV"] = "loaded"
+
+        mock_load_dotenv.side_effect = _fake_load
+
+        result: Result = runner.invoke(app, ["serve", "--env-file", str(env_file)])
         assert result.exit_code == 0
 
-        # The command sets the env var when provided and exists
-        assert os.environ.get("INGENIOUS_PROFILE_PATH") == str(profiles).replace(
-            "\\", "/"
+        # ensure dotenv called with resolved path
+        called_paths = [
+            str(call.args[0]) for call in mock_load_dotenv.call_args_list if call.args
+        ]
+        assert str(env_file.resolve()) in called_paths
+        assert any(
+            call.kwargs.get("override") for call in mock_load_dotenv.call_args_list
         )
 
-        # ensure server called
-        uv_run.assert_called_once()
+        # ensure environment variable was set via fake loader
+        assert os.environ.get("CUSTOM_ENV") == "loaded"
 
-        # app constructed via seam
+        # server still starts
+        uv_run.assert_called_once()
         make_app_mock.assert_called_once_with(get_cfg.return_value)

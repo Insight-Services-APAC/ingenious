@@ -244,9 +244,6 @@ INGENIOUS_LOCAL_SQL_DB__DATABASE_PATH=./.tmp/sample_sql.db
 # INGENIOUS_FILE_STORAGE__REVISIONS__URL=https://YOUR_STORAGE_ACCOUNT.blob.core.windows.net
 # INGENIOUS_FILE_STORAGE__REVISIONS__TOKEN=DefaultEndpointsProtocol=https;AccountName=YOUR_ACCOUNT;AccountKey=YOUR_KEY;EndpointSuffix=core.windows.net
 
-# Legacy Configuration Migration
-# If you have existing config.yml and profiles.yml files, you can migrate them using:
-# uv run python scripts/migrate_config.py --yaml-file config.yml --output .env
 """
         else:
             content = f"# {filename} - Created by Insight Ingenious\n"
@@ -389,14 +386,6 @@ tmp/
             "\n".join(next_steps), "🚀 Next Steps", "green"
         )
         self.console.print(panel)
-
-        self.console.print(
-            "\n[bold yellow]💡 Migration from YAML configuration:[/bold yellow]"
-        )
-        self.console.print("   If you have existing config.yml and profiles.yml files:")
-        self.console.print(
-            "   uv run python scripts/migrate_config.py --yaml-file config.yml --output .env"
-        )
 
         self.console.print(
             "\n[bold yellow]💡 For detailed configuration help:[/bold yellow]"

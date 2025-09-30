@@ -16,16 +16,11 @@ import sys
 import warnings
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, TypeVar
+from typing import Any, Dict, List, Optional
 
 from ingenious.core.structured_logging import get_logger
 
 logger = get_logger(__name__)
-
-# Type variables for generic type safety
-T = TypeVar("T")
-ModuleType = TypeVar("ModuleType")
-ClassType = TypeVar("ClassType")
 
 
 class ImportError(Exception):
@@ -50,24 +45,6 @@ class ImportValidationError(Exception):
     """Error raised when imported module/class doesn't meet requirements."""
 
     pass
-
-
-class WorkflowProtocol(Protocol):
-    """Protocol for workflow classes."""
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
-
-
-class ChatServiceProtocol(Protocol):
-    """Protocol for chat service classes."""
-
-    async def get_chat_response(self, chat_request: Any) -> Any: ...
-
-
-class ExtractorProtocol(Protocol):
-    """Protocol for document extractor classes."""
-
-    def extract(self, document: Any) -> Any: ...
 
 
 class SafeImporter:
@@ -132,7 +109,6 @@ class SafeImporter:
     def _validate_class(
         self,
         cls: type,
-        expected_protocol: Optional[type] = None,
         expected_methods: Optional[List[str]] = None,
     ) -> None:
         """Validate that a class meets expected requirements."""
@@ -326,7 +302,6 @@ class SafeImporter:
         self,
         module_name: str,
         class_name: str,
-        expected_protocol: Optional[type] = None,
         expected_methods: Optional[List[str]] = None,
         use_cache: bool = True,
     ) -> type:
@@ -336,7 +311,6 @@ class SafeImporter:
         Args:
             module_name: Name of the module containing the class
             class_name: Name of the class to import
-            expected_protocol: Protocol the class should implement
             expected_methods: List of methods the class must have
             use_cache: Whether to use cached imports
 
@@ -374,7 +348,7 @@ class SafeImporter:
                 )
 
             # Validate the class
-            self._validate_class(cls, expected_protocol, expected_methods)
+            self._validate_class(cls, expected_methods)
 
             if use_cache:
                 self._class_cache[cache_key] = cls
@@ -396,7 +370,6 @@ class SafeImporter:
         self,
         module_name: str,
         class_name: str,
-        expected_protocol: Optional[type] = None,
         expected_methods: Optional[List[str]] = None,
         use_cache: bool = True,
     ) -> type:
@@ -406,7 +379,6 @@ class SafeImporter:
         Args:
             module_name: Name of the module (without namespace prefix)
             class_name: Name of the class to import
-            expected_protocol: Protocol the class should implement
             expected_methods: List of methods the class must have
             use_cache: Whether to use cached imports
 
@@ -444,7 +416,7 @@ class SafeImporter:
                 )
 
             # Validate the class
-            self._validate_class(cls, expected_protocol, expected_methods)
+            self._validate_class(cls, expected_methods)
 
             if use_cache:
                 self._class_cache[cache_key] = cls

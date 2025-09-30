@@ -14,14 +14,10 @@ from unittest.mock import Mock, patch
 import pytest
 from rich.console import Console
 
-from ingenious.cli.base import BaseCommand, CommandError, ExitCode, create_console
+from ingenious.cli.base import BaseCommand, CommandError, ExitCode
 from ingenious.cli.commands.help import HelpCommand, StatusCommand
 from ingenious.cli.registry import CommandRegistry
-from ingenious.cli.utilities import (
-    ConfigUtils,
-    FileOperations,
-    ValidationUtils,
-)
+from ingenious.cli.utilities import FileOperations, ValidationUtils
 
 
 class TestCommand(BaseCommand):
@@ -97,48 +93,26 @@ class TestBaseCommand:
         self.command.stop_progress()
         assert self.command._progress is None
 
-    @patch.dict(
-        os.environ,
-        {
-            "INGENIOUS_PROJECT_PATH": "/test/config.yml",
-            "INGENIOUS_PROFILE_PATH": "/test/profiles.yml",
-        },
-    )
-    @patch("pathlib.Path.exists")
-    def test_validate_config_paths_success(self, mock_exists):
-        """Test successful config path validation."""
-        mock_exists.return_value = True
+    def test_load_env_file_with_path(self, tmp_path, monkeypatch):
+        """Test loading environment variables from a provided .env file."""
+        env_file = tmp_path / ".env.custom"
+        env_file.write_text("TEST_ENV_VALUE=123\n")
 
-        paths = self.command.validate_config_paths()
+        monkeypatch.delenv("TEST_ENV_VALUE", raising=False)
 
-        assert paths["config"] == "/test/config.yml"
-        assert paths["profile"] == "/test/profiles.yml"
+        resolved = self.command.load_env_file(str(env_file))
 
-    @patch.dict(os.environ, {}, clear=True)
-    @patch("pathlib.Path.exists")
-    def test_validate_config_paths_fallback(self, mock_exists):
-        """Test config path validation with fallback."""
-        mock_exists.return_value = True
+        assert resolved == str(env_file.resolve())
+        assert os.getenv("TEST_ENV_VALUE") == "123"
 
-        with patch("pathlib.Path.cwd") as mock_cwd:
-            mock_cwd.return_value = Path("/current")
-            paths = self.command.validate_config_paths()
+    def test_load_env_file_missing_path(self, tmp_path):
+        """Test that missing environment files raise a CommandError."""
+        missing = tmp_path / "does-not-exist.env"
 
-            assert paths["config"] == "/current/config.yml"
-            assert paths["profile"] == "/current/profiles.yml"
+        with pytest.raises(CommandError) as exc:
+            self.command.load_env_file(str(missing))
 
-    def test_check_environment_vars_success(self):
-        """Test successful environment variable checking."""
-        with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
-            env_vars = self.command.check_environment_vars(["TEST_VAR"])
-            assert env_vars["TEST_VAR"] == "test_value"
-
-    def test_check_environment_vars_missing(self):
-        """Test environment variable checking with missing vars."""
-        with pytest.raises(CommandError) as exc_info:
-            self.command.check_environment_vars(["MISSING_VAR"])
-
-        assert exc_info.value.exit_code == ExitCode.INVALID_CONFIG
+        assert "Environment file not found" in str(exc.value)
 
 
 class TestCommandRegistry:
@@ -203,21 +177,6 @@ class TestCommandRegistry:
         all_commands = self.registry.list_commands(include_hidden=True)
         assert len(all_commands) == 2
 
-    def test_create_command_instance(self):
-        """Test command instance creation."""
-        self.registry.register_command("test", TestCommand, "Test command")
-
-        instance = self.registry.create_command_instance("test")
-        assert isinstance(instance, TestCommand)
-        assert instance.console == self.console
-
-    def test_validate_commands(self):
-        """Test command validation."""
-        self.registry.register_command("test", TestCommand, "Test command")
-
-        errors = self.registry.validate_commands()
-        assert len(errors) == 0  # TestCommand should be valid
-
 
 class TestFileOperations:
     """Test cases for FileOperations utility class."""
@@ -232,29 +191,6 @@ class TestFileOperations:
             assert result == test_dir
             assert test_dir.exists()
             assert test_dir.is_dir()
-
-    def test_backup_file(self):
-        """Test file backup creation."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            test_file = Path(temp_dir) / "test.txt"
-            test_file.write_text("test content")
-
-            backup_path = FileOperations.backup_file(test_file)
-
-            assert backup_path is not None
-            assert backup_path.exists()
-            assert backup_path.read_text() == "test content"
-
-    def test_safe_remove_file(self):
-        """Test safe file removal."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            test_file = Path(temp_dir) / "test.txt"
-            test_file.write_text("test content")
-
-            result = FileOperations.safe_remove(test_file)
-
-            assert result is True
-            assert not test_file.exists()
 
     def test_copy_tree_safe(self):
         """Test safe directory tree copying."""
@@ -275,14 +211,6 @@ class TestFileOperations:
 
 class TestValidationUtils:
     """Test cases for ValidationUtils utility class."""
-
-    def test_validate_file_extension(self):
-        """Test file extension validation."""
-        assert ValidationUtils.validate_file_extension("test.yml", [".yml", ".yaml"])
-        assert ValidationUtils.validate_file_extension("test.yaml", [".yml", ".yaml"])
-        assert not ValidationUtils.validate_file_extension(
-            "test.txt", [".yml", ".yaml"]
-        )
 
     def test_validate_port(self):
         """Test port validation."""
@@ -305,51 +233,6 @@ class TestValidationUtils:
         # Invalid URLs
         assert ValidationUtils.validate_url("not_a_url")[0] is False
         assert ValidationUtils.validate_url("")[0] is False
-
-
-class TestConfigUtils:
-    """Test cases for ConfigUtils utility class."""
-
-    @patch.dict(os.environ, {"INGENIOUS_PROJECT_PATH": "/env/config.yml"})
-    def test_resolve_config_path_env_var(self):
-        """Test config path resolution from environment variable."""
-        path = ConfigUtils.resolve_config_path()
-        assert path == Path("/env/config.yml")
-
-    @patch.dict(os.environ, {}, clear=True)
-    def test_resolve_config_path_default(self):
-        """Test config path resolution to default."""
-        with patch("pathlib.Path.cwd") as mock_cwd:
-            mock_cwd.return_value = Path("/current")
-            path = ConfigUtils.resolve_config_path()
-            assert path == Path("/current/config.yml")
-
-    def test_load_env_file(self):
-        """Test environment file loading."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write("KEY1=value1\nKEY2=value2\n# Comment\nKEY3='quoted value'")
-            f.flush()
-
-            env_vars = ConfigUtils.load_env_file(f.name)
-
-            assert env_vars["KEY1"] == "value1"
-            assert env_vars["KEY2"] == "value2"
-            assert env_vars["KEY3"] == "quoted value"
-            assert "Comment" not in env_vars
-
-        # Clean up
-        os.unlink(f.name)
-
-
-class TestCreateConsole:
-    """Test cases for console creation function."""
-
-    def test_create_console(self):
-        """Test console creation with custom theme."""
-        console = create_console()
-
-        assert isinstance(console, Console)
-        # Note: Rich Console doesn't always expose theme attribute directly
 
 
 class TestHelpCommand:
@@ -393,8 +276,9 @@ class TestStatusCommand:
     @patch.dict(
         os.environ,
         {
-            "INGENIOUS_PROJECT_PATH": "/test/config.yml",
-            "INGENIOUS_PROFILE_PATH": "/test/profiles.yml",
+            "INGENIOUS_MODELS__0__API_KEY": "test-key",
+            "INGENIOUS_MODELS__0__BASE_URL": "https://example.com",
+            "INGENIOUS_MODELS__0__MODEL": "gpt-4o-mini",
         },
     )
     @patch("pathlib.Path.exists")

@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ingenious.cli.commands.help import ValidateCommand
+from ingenious.common.enums import AuthenticationMethod
+from ingenious.config.models import ModelSettings
 
 
 class TestValidateCommand:
@@ -51,23 +53,27 @@ class TestValidateCommand:
             assert any("API_KEY" in error for error in issues)
 
     def test_validate_configuration_files_with_valid_files(
-        self, validate_command, mock_console, tmp_path
+        self, validate_command, mock_console
     ):
         """Test configuration file validation with valid files."""
-        # Create temp config files
-        env_file = tmp_path / ".env"
-        env_file.write_text("INGENIOUS_MODELS__0__API_KEY=test-key\n")
+        fake_model = ModelSettings(
+            model="gpt-4o-mini",
+            api_key="test-key",
+            base_url="https://example.openai.azure.com/",
+            authentication_method=AuthenticationMethod.TOKEN,
+        )
 
-        yaml_file = tmp_path / "config.yml"
-        yaml_file.write_text("models:\n  - api_key: test-key\n")
+        mock_settings = MagicMock()
+        mock_settings.models = [fake_model]
+        mock_settings.validate_configuration.return_value = None
 
-        with patch("pathlib.Path.exists", return_value=True):
-            with patch(
-                "pathlib.Path.open",
-                mock_open(read_data="INGENIOUS_MODELS__0__API_KEY=test"),
-            ):
-                success, issues = validate_command._validate_configuration_files()
-                assert isinstance(success, bool)  # May have errors for missing files
+        with patch(
+            "ingenious.config.main_settings.IngeniousSettings",
+            return_value=mock_settings,
+        ):
+            success, issues = validate_command._validate_configuration_files()
+            assert success
+            assert issues == []
 
     def test_validate_azure_connectivity_success(self, validate_command, mock_console):
         """Test Azure connectivity validation with successful connection."""
@@ -152,14 +158,3 @@ class TestValidateCommand:
                 mock_config.return_value.web_configuration.port = 8080
                 success, issues = validate_command._validate_port_availability()
                 assert not success
-
-
-def mock_open(read_data=""):
-    """Helper to create a mock file object."""
-    import io
-    from unittest.mock import MagicMock
-
-    mock = MagicMock()
-    mock.__enter__ = lambda self: io.StringIO(read_data)
-    mock.__exit__ = lambda self, *args: None
-    return MagicMock(return_value=mock)

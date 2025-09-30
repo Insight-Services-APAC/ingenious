@@ -62,7 +62,6 @@ def test_serve_uses_WEB_PORT_env_when_set(monkeypatch: MonkeyPatch) -> None:
     # The default value is captured at command registration time, so the
     # environment must be set before the app is created.
     # Clean state and set env BEFORE registering commands (default captured at registration)
-    monkeypatch.delenv("INGENIOUS_PROFILE_PATH", raising=False)
     monkeypatch.setenv("WEB_PORT", "1234")
 
     app: typer.Typer = make_app_and_register()
@@ -93,7 +92,6 @@ def test_serve_cli_port_overrides_env(monkeypatch: MonkeyPatch) -> None:
     """Ensure CLI --port overrides WEB_PORT and --host overrides the default."""
     # This ensures that explicit command-line arguments have a higher precedence
     # than configuration from environment variables, which is standard CLI behavior.
-    monkeypatch.delenv("INGENIOUS_PROFILE_PATH", raising=False)
     monkeypatch.setenv("WEB_PORT", "1234")
 
     app: typer.Typer = make_app_and_register()
@@ -119,23 +117,12 @@ def test_serve_cli_port_overrides_env(monkeypatch: MonkeyPatch) -> None:
         assert kwargs["port"] == 9999
 
 
-def test_run_rest_api_server_sets_default_config_yml_if_present(
+def test_run_rest_api_server_loads_env_files(
     monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Test 'run-rest-api-server' auto-detects config.yml and handles profiles."""
-    # This test verifies two behaviors of the hidden 'run-rest-api-server' command:
-    # 1. It automatically finds and uses a 'config.yml' in the current directory
-    #    if no explicit configuration is provided.
-    # 2. It logs a warning if a specified 'profiles.yml' path does not exist.
-    # Work in a temp CWD with a config.yml present
+    """Ensure 'run-rest-api-server' triggers dotenv loading with and without --env-file."""
+
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "config.yml").write_text("stub: 1")
-
-    # Clean env state
-    monkeypatch.delenv("INGENIOUS_PROJECT_PATH", raising=False)
-    monkeypatch.delenv("INGENIOUS_PROFILE_PATH", raising=False)
-
-    # Register with a mocked console (we don't assert console output here)
     app: typer.Typer = make_app_and_register()
 
     fake_logger: MagicMock = MagicMock()
@@ -143,51 +130,47 @@ def test_run_rest_api_server_sets_default_config_yml_if_present(
         "ingenious.cli.server_commands.logger", fake_logger, raising=False
     )
 
-    # Avoid any filesystem side‑effects during package-copy check
     monkeypatch.setattr(
         "ingenious.cli.server_commands.CliFunctions.PureLibIncludeDirExists",
         cast(Callable[[], bool], lambda: False),
         raising=False,
     )
 
+    env_file = tmp_path / ".env.runtime"
+    env_file.write_text("INGENIOUS_MODELS__0__MODEL=gpt-4o-mini\n")
+
     with (
+        patch("ingenious.cli.server_commands.load_dotenv") as mock_load_dotenv,
         patch(
             "ingenious.cli.server_commands.get_config", return_value=stub_config()
-        ),  # Remove 'as get_cfg' - it's not used
+        ) as get_cfg,
         patch(
             "ingenious.cli.server_commands.make_app", return_value=MagicMock()
         ) as make_app_mock,
         patch("ingenious.cli.server_commands.uvicorn.run") as uv_run,
     ):
-        # A) No args → should auto-detect config.yml and set env var
+        # A) No args → default dotenv discovery (no positional args)
         res1: Result = runner.invoke(app, ["run-rest-api-server"])
         assert res1.exit_code == 0
-
-        cfg_path: str = str(tmp_path / "config.yml")
-        assert os.environ.get("INGENIOUS_PROJECT_PATH") == cfg_path
-        # Logger info about default path was emitted
-        info_msgs: list[Any] = [
-            call.args[0] for call in fake_logger.info.call_args_list
-        ]
-        assert any("Using default config path" in msg for msg in info_msgs), info_msgs
-
-        # B) Provide an explicit (missing) profiles.yml → should warn
-        res2: Result = runner.invoke(
-            app, ["run-rest-api-server", ".", "missing_profiles.yml"]
-        )
-        assert res2.exit_code == 0
-
-        warn_msgs: list[Any] = [
-            call.args[0] for call in fake_logger.warning.call_args_list
-        ]
         assert any(
-            "Specified profiles.yml not found, using .env configuration only" in msg
-            for msg in warn_msgs
-        ), warn_msgs
+            not call.args and call.kwargs.get("override")
+            for call in mock_load_dotenv.call_args_list
+        )
+
+        mock_load_dotenv.reset_mock()
+
+        # B) Provide explicit env file → should load resolved path
+        res2: Result = runner.invoke(app, ["run-rest-api-server", str(env_file)])
+        assert res2.exit_code == 0
+        called_paths = [
+            str(call.args[0]) for call in mock_load_dotenv.call_args_list if call.args
+        ]
+        assert str(env_file.resolve()) in called_paths
 
         # App seam still used
-        assert make_app_mock.called
-        assert uv_run.called
+        make_app_mock.assert_called()
+        uv_run.assert_called()
+        get_cfg.assert_called()
 
 
 def test_prompt_tuner_removed_exits_1_with_message() -> None:

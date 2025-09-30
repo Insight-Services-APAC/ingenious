@@ -23,8 +23,8 @@ Usage Examples:
         ctx.add_metadata(response_tokens=response.token_count)
 
     # File operations with proper error mapping
-    with file_operation("config_load", "/path/to/config.yml"):
-        config = load_config()
+    with file_operation("env_load", "/path/to/.env"):
+        load_environment()
 """
 
 from __future__ import annotations
@@ -300,8 +300,8 @@ def file_operation(
 
     Examples
     --------
-    >>> with file_operation("config_load", "/path/to/config.yml"):
-    ...     config = load_yaml_file(file_path)
+    >>> with file_operation("env_load", "/path/to/.env"):
+    ...     load_environment()
     """
     try:
         with operation_context(
