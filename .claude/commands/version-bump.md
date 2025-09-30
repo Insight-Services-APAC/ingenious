@@ -41,10 +41,51 @@ Run the `/pr-merge` command to:
 
 After successful merge to `main`:
 
+**Prepare comprehensive release notes:**
+1. Run `git log <previous-version>..HEAD --oneline` to see all commits since last release
+2. Run `git diff <previous-version>..HEAD --stat` to see all changed files
+3. Categorize changes into sections:
+   - Features: New functionality added
+   - Improvements: Enhancements to existing features
+   - Bug Fixes: Issues resolved
+   - Documentation: Documentation updates
+   - Internal: Refactoring, tests, configuration changes
+4. List all significant changes with brief descriptions
+5. Note any breaking changes or migration requirements
+
+**Create release:**
 ```sh
 gh release create vx.x.x \
   --title "Release vx.x.x" \
-  --notes "Release version x.x.x" \
+  --notes "$(cat <<'EOF'
+## Summary
+Brief overview of release
+
+## Changes
+
+### Features
+- Feature 1
+- Feature 2
+
+### Improvements
+- Improvement 1
+
+### Bug Fixes
+- Fix 1
+
+### Documentation
+- Doc update 1
+
+### Internal
+- Internal change 1
+
+## Files Modified
+List of key files changed
+
+## Breaking Changes
+Note any breaking changes or none
+EOF
+)" \
   --target main
 ```
 

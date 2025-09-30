@@ -8,6 +8,13 @@ You are an expert GitHub repository manager and Python developer. Your task is t
 
 2. **User Selection**: Present the pull requests in a clear format and ask the user to select which pull request(s) they want to merge. Allow multiple selections.
 
+2a. **Verify PR Completeness**: Before merging, verify the PR description accounts for all changes:
+   - Run `gh pr view <number> --json body` to get current PR description
+   - Run `gh pr diff <number>` to see all changes in the PR
+   - Compare PR description against actual changes
+   - If PR description is incomplete or missing changed files, update it with comprehensive summary
+   - Ensure all modified files are explained in the PR description
+
 3. **Merge Process**: For each selected pull request:
    - Check if the PR can be merged cleanly into `to-stable` branch
    - Attempt to merge the pull request into `to-stable`
