@@ -122,7 +122,7 @@ def test_run_rest_api_server_loads_env_files(monkeypatch: MonkeyPatch, tmp_path:
     )
 
     env_file = tmp_path / ".env.runtime"
-    env_file.write_text("INGENIOUS_MODELS__0__MODEL=gpt-4o-mini\n")
+    env_file.write_text("INGENIOUS_MODELS__0__MODEL=gpt-5-mini\n")
 
     with (
         patch("ingenious.cli.server_commands.load_dotenv") as mock_load_dotenv,

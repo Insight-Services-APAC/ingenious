@@ -152,12 +152,12 @@ class InitCommand(BaseCommand):
 INGENIOUS_MODELS__0__API_KEY=your-api-key-here
 # Base URL for Azure OpenAI (use Cognitive Services endpoint format)
 INGENIOUS_MODELS__0__BASE_URL=https://eastus.api.cognitive.microsoft.com/
-# Model name (e.g., gpt-4o-mini, gpt-4, gpt-3.5-turbo)
-INGENIOUS_MODELS__0__MODEL=gpt-4o-mini
+# Model name (e.g., gpt-5-mini, gpt-4, gpt-3.5-turbo)
+INGENIOUS_MODELS__0__MODEL=gpt-5-mini
 # Azure OpenAI API version
 INGENIOUS_MODELS__0__API_VERSION=2024-12-01-preview
 # Azure OpenAI deployment name (usually same as model)
-INGENIOUS_MODELS__0__DEPLOYMENT=gpt-4o-mini
+INGENIOUS_MODELS__0__DEPLOYMENT=gpt-5-mini
 # API type for Azure OpenAI
 INGENIOUS_MODELS__0__API_TYPE=rest
 # Role for this model (chat for generation, embedding for vector operations)

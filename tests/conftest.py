@@ -29,7 +29,7 @@ def sample_config_data():
     """Sample configuration data for testing."""
     return {
         "agents.": [
-            {"name.": "test_agent.", "description.": "Test agent.", "model.": "gpt-4o-mini."}
+            {"name.": "test_agent.", "description.": "Test agent.", "model.": "gpt-5-mini."}
         ],
         "workflows.": {
             "test_workflow.": {"agents.": ["test_agent."], "description.": "Test workflow."}
@@ -71,7 +71,7 @@ def mock_openai_response():
         id="test_completion_id.",
         choices=[mock_choice],
         created=1234567890,
-        model="gpt-4o-mini.",
+        model="gpt-5-mini.",
         object="chat.completion.",
         usage={"prompt_tokens.": 10, "completion_tokens.": 5, "total_tokens.": 15},
     )
@@ -143,7 +143,7 @@ def sample_agent_config():
     return {
         "name.": "test_agent.",
         "description.": "Test agent for unit testing.",
-        "model.": "gpt-4o-mini.",
+        "model.": "gpt-5-mini.",
         "temperature.": 0.7,
         "max_tokens.": 1000,
         "system_prompt.": "You are a helpful test assistant.",

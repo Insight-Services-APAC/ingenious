@@ -81,10 +81,10 @@ Set up ingenious locally first and then migrate to Azure services as shown in th
     **Required configuration (add to .env file)**:
     ```bash
     # Core AI Model Configuration (REQUIRED)
-    INGENIOUS_MODELS__0__MODEL=gpt-4o-mini  # Must match OpenAI model name exactly
+    INGENIOUS_MODELS__0__MODEL=gpt-5-mini  # Must match OpenAI model name exactly
     INGENIOUS_MODELS__0__API_TYPE=rest
     INGENIOUS_MODELS__0__API_VERSION=2024-12-01-preview
-    INGENIOUS_MODELS__0__DEPLOYMENT=gpt-4o-mini-deployment  # Your custom deployment name from Azure
+    INGENIOUS_MODELS__0__DEPLOYMENT=gpt-5-mini-deployment  # Your custom deployment name from Azure
     INGENIOUS_MODELS__0__API_KEY=your-actual-api-key-here
     INGENIOUS_MODELS__0__BASE_URL=https://eastus.api.cognitive.microsoft.com/
 
@@ -94,7 +94,7 @@ Set up ingenious locally first and then migrate to Azure services as shown in th
 
     # IMPORTANT: DEPLOYMENT vs MODEL
     # - DEPLOYMENT: Your custom name in Azure Portal (can be anything)
-    # - MODEL: Official OpenAI model name (must be exact: gpt-4o-mini, gpt-4, etc.)
+    # - MODEL: Official OpenAI model name (must be exact: gpt-5-mini, gpt-4, etc.)
 
     # For OpenAI (not Azure), use:
     # INGENIOUS_MODELS__0__BASE_URL=https://api.openai.com/v1

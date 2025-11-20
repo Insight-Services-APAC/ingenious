@@ -79,9 +79,9 @@ Environment variables with `INGENIOUS_` prefix (using pydantic-settings):
 # Required Azure OpenAI - use Cognitive Services endpoint format (CRITICAL)
 INGENIOUS_MODELS__0__API_KEY=your-key
 INGENIOUS_MODELS__0__BASE_URL=https://eastus.api.cognitive.microsoft.com/
-INGENIOUS_MODELS__0__MODEL=gpt-4o-mini
+INGENIOUS_MODELS__0__MODEL=gpt-5-mini
 INGENIOUS_MODELS__0__API_VERSION=2024-12-01-preview
-INGENIOUS_MODELS__0__DEPLOYMENT=gpt-4o-mini-deployment
+INGENIOUS_MODELS__0__DEPLOYMENT=gpt-5-mini-deployment
 INGENIOUS_MODELS__0__API_TYPE=rest
 INGENIOUS_MODELS__0__ROLE=chat
 

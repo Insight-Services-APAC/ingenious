@@ -632,9 +632,9 @@ class ValidateCommand(BaseCommand):
             "# Edit .env file and set required variables:",
             "INGENIOUS_MODELS__0__API_KEY=your-azure-openai-api-key",
             "INGENIOUS_MODELS__0__BASE_URL=https://your-resource.openai.azure.com/",
-            "INGENIOUS_MODELS__0__MODEL=gpt-4o-mini",
+            "INGENIOUS_MODELS__0__MODEL=gpt-5-mini",
             "INGENIOUS_MODELS__0__API_VERSION=2024-02-01",
-            "INGENIOUS_MODELS__0__DEPLOYMENT=gpt-4o-mini",
+            "INGENIOUS_MODELS__0__DEPLOYMENT=gpt-5-mini",
         ]
 
         panel = Panel(

@@ -273,7 +273,7 @@ class TestStatusCommand:
         {
             "INGENIOUS_MODELS__0__API_KEY": "test-key",
             "INGENIOUS_MODELS__0__BASE_URL": "https://example.com",
-            "INGENIOUS_MODELS__0__MODEL": "gpt-4o-mini",
+            "INGENIOUS_MODELS__0__MODEL": "gpt-5-mini",
         },
     )
     @patch("pathlib.Path.exists")

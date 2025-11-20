@@ -55,7 +55,7 @@ class TestValidateCommand:
     def test_validate_configuration_files_with_valid_files(self, validate_command, mock_console):
         """Test configuration file validation with valid files."""
         fake_model = ModelSettings(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             api_key="test-key",
             base_url="https://example.openai.azure.com/",
             authentication_method=AuthenticationMethod.TOKEN,

@@ -51,8 +51,8 @@ az cognitiveservices account deployment create \
 az cognitiveservices account deployment create \
   --name your-openai-resource \
   --resource-group your-rg-name \
-  --deployment-name gpt-4o-mini-deployment \
-  --model-name gpt-4o-mini \
+  --deployment-name gpt-5-mini-deployment \
+  --model-name gpt-5-mini \
   --model-version "2024-07-18" \
   --model-format OpenAI \
   --sku-capacity 1 \
@@ -73,7 +73,7 @@ Migrate from local ChromaDB to Azure AI Search:
 |----------|-------------|---------|
 | **Model Configuration (REQUIRED)** | | |
 | `INGENIOUS_MODELS__0__ROLE` | Must be set to "chat" | `chat` |
-| `INGENIOUS_MODELS__0__DEPLOYMENT` | Chat model deployment | `gpt-4o-mini-deployment` |
+| `INGENIOUS_MODELS__0__DEPLOYMENT` | Chat model deployment | `gpt-5-mini-deployment` |
 | `INGENIOUS_MODELS__1__ROLE` | Must be set to "embedding" | `embedding` |
 | `INGENIOUS_MODELS__1__DEPLOYMENT` | Embedding model deployment | `text-embedding-3-small-deployment` |
 | `KB_POLICY` | Backend selection policy | `azure_only` or `prefer_azure` |
@@ -81,7 +81,7 @@ Migrate from local ChromaDB to Azure AI Search:
 | `INGENIOUS_AZURE_SEARCH_SERVICES__0__KEY` | Search admin key | `your-search-admin-key` |
 | `INGENIOUS_AZURE_SEARCH_SERVICES__0__INDEX_NAME` | Search index name | `knowledge-base` |
 | `INGENIOUS_AZURE_SEARCH_SERVICES__0__EMBEDDING_DEPLOYMENT_NAME` | Embedding model deployment | `text-embedding-3-small-deployment` |
-| `INGENIOUS_AZURE_SEARCH_SERVICES__0__GENERATION_DEPLOYMENT_NAME` | Generation model deployment | `gpt-4o-mini-deployment` |
+| `INGENIOUS_AZURE_SEARCH_SERVICES__0__GENERATION_DEPLOYMENT_NAME` | Generation model deployment | `gpt-5-mini-deployment` |
 | `INGENIOUS_AZURE_SEARCH_SERVICES__0__OPENAI_ENDPOINT` | Azure OpenAI endpoint | `https://eastus.api.cognitive.microsoft.com/` |
 | `INGENIOUS_AZURE_SEARCH_SERVICES__0__OPENAI_KEY` | Azure OpenAI key | `your-openai-key` |
 | `INGENIOUS_AZURE_SEARCH_SERVICES__0__OPENAI_VERSION` | API version | `2024-12-01-preview` |
@@ -92,9 +92,9 @@ Migrate from local ChromaDB to Azure AI Search:
 # Model 0: Chat/Generation model (REQUIRED)
 INGENIOUS_MODELS__0__API_KEY=your-openai-api-key
 INGENIOUS_MODELS__0__BASE_URL=https://your-region.api.cognitive.microsoft.com/
-INGENIOUS_MODELS__0__MODEL=gpt-4o-mini
+INGENIOUS_MODELS__0__MODEL=gpt-5-mini
 INGENIOUS_MODELS__0__API_VERSION=2024-12-01-preview
-INGENIOUS_MODELS__0__DEPLOYMENT=gpt-4o-mini-deployment
+INGENIOUS_MODELS__0__DEPLOYMENT=gpt-5-mini-deployment
 INGENIOUS_MODELS__0__API_TYPE=rest
 INGENIOUS_MODELS__0__ROLE=chat  # CRITICAL: Must be "chat"
 
@@ -454,7 +454,7 @@ If Azure fails but local fallback doesn't work:
 ### Azure OpenAI Deployments
 
 - **text-embedding-3-small**: ~$0.00002 per 1K tokens
-- **gpt-4o-mini**: ~$0.000075 per 1K tokens (generation)
+- **gpt-5-mini**: ~$0.000075 per 1K tokens (generation)
 
 Total minimal cost for light usage: ~$15-20/month with Basic search tier.
 
