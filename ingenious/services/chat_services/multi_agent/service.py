@@ -2,6 +2,7 @@
 
 import logging
 import uuid as uuid_module
+import warnings
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional
 
@@ -179,11 +180,20 @@ class multi_agent_chat_service:
 
             except TypeError as te:
                 # Fall back to old pattern (static methods)
-                logger.info(
-                    "Using static method pattern for conversation flow",
+                warnings.warn(
+                    f"ConversationFlow '{self.conversation_flow}' is using deprecated static method pattern. "
+                    f"This pattern will be removed in v0.3.0. "
+                    f"Please migrate to IConversationFlow with instance methods. "
+                    f"See docs/MIGRATION.md for migration guide.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                logger.warning(
+                    "DEPRECATED: Using static method pattern for conversation flow",
                     conversation_flow=self.conversation_flow,
                     type_error=str(te),
                     operation="fallback_static_method",
+                    deprecation_notice="This pattern will be removed in v0.3.0",
                 )
 
                 # Try different static method signatures
@@ -247,9 +257,19 @@ class multi_agent_chat_service:
                     agent_response = agent_response_tuple
                 elif isinstance(agent_response_tuple, tuple) and len(agent_response_tuple) == 2:
                     # Tuple response (response_text, memory_summary)
-                    logger.debug(
-                        "Converting tuple response to ChatResponse",
+                    warnings.warn(
+                        f"ConversationFlow '{self.conversation_flow}' is returning tuple (response_text, memory_summary). "
+                        f"This response format is deprecated and will be removed in v0.3.0. "
+                        f"Please return ChatResponse objects instead. "
+                        f"See docs/MIGRATION.md for migration guide.",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+                    logger.warning(
+                        "DEPRECATED: Converting tuple response to ChatResponse",
+                        conversation_flow=self.conversation_flow,
                         operation="tuple_conversion",
+                        deprecation_notice="Tuple response format will be removed in v0.3.0",
                     )
                     response_text, memory_summary = agent_response_tuple
                     agent_response = ChatResponse(
