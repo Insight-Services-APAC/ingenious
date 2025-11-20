@@ -60,6 +60,16 @@ class TestSQLiteDialect:
         assert data_types["datetime"] == "TEXT"
         assert data_types["json"] == "JSONB"
 
+    def test_create_index_syntax(self):
+        """Test CREATE INDEX syntax for SQLite."""
+        result = self.dialect.get_create_index_syntax(
+            "idx_test_column", "test_table", "column_name"
+        )
+        assert "CREATE INDEX IF NOT EXISTS" in result
+        assert '"idx_test_column"' in result
+        assert "test_table" in result
+        assert '"column_name"' in result
+
 
 class TestAzureSQLDialect:
     """Test Azure SQL dialect implementation."""
@@ -110,6 +120,18 @@ class TestAzureSQLDialect:
         assert data_types["boolean"] == "BIT"
         assert data_types["datetime"] == "DATETIME2"
         assert data_types["json"] == "NVARCHAR(MAX)"
+
+    def test_create_index_syntax(self):
+        """Test CREATE INDEX syntax for Azure SQL."""
+        result = self.dialect.get_create_index_syntax(
+            "idx_test_column", "test_table", "column_name"
+        )
+        assert "IF NOT EXISTS" in result
+        assert "sys.indexes" in result
+        assert "idx_test_column" in result
+        assert "test_table" in result
+        assert "[column_name]" in result
+        assert "CREATE INDEX" in result
 
 
 class TestQueryBuilder:
@@ -215,6 +237,30 @@ class TestSQLiteQueryBuilder:
         query = self.builder.get_query("non_existent_query")
         assert query == ""
 
+    def test_create_index_threads_user_identifier(self):
+        """Test index creation for threads.userIdentifier with SQLite syntax."""
+        query = self.builder.create_index_threads_user_identifier()
+        assert "CREATE INDEX IF NOT EXISTS" in query
+        assert "idx_threads_userIdentifier" in query
+        assert "threads" in query
+        assert "userIdentifier" in query
+
+    def test_create_index_steps_thread_id(self):
+        """Test index creation for steps.threadId with SQLite syntax."""
+        query = self.builder.create_index_steps_thread_id()
+        assert "CREATE INDEX IF NOT EXISTS" in query
+        assert "idx_steps_threadId" in query
+        assert "steps" in query
+        assert "threadId" in query
+
+    def test_create_index_elements_thread_id(self):
+        """Test index creation for elements.threadId with SQLite syntax."""
+        query = self.builder.create_index_elements_thread_id()
+        assert "CREATE INDEX IF NOT EXISTS" in query
+        assert "idx_elements_threadId" in query
+        assert "elements" in query
+        assert "threadId" in query
+
 
 class TestAzureSQLQueryBuilder:
     """Test QueryBuilder with Azure SQL dialect."""
@@ -258,6 +304,36 @@ class TestAzureSQLQueryBuilder:
         assert "FROM (" in query
         assert "ROW_NUMBER() OVER" in query
         assert "ORDER BY timestamp ASC" in query
+
+    def test_create_index_threads_user_identifier(self):
+        """Test index creation for threads.userIdentifier with Azure SQL syntax."""
+        query = self.builder.create_index_threads_user_identifier()
+        assert "IF NOT EXISTS" in query
+        assert "sys.indexes" in query
+        assert "idx_threads_userIdentifier" in query
+        assert "threads" in query
+        assert "[userIdentifier]" in query
+        assert "CREATE INDEX" in query
+
+    def test_create_index_steps_thread_id(self):
+        """Test index creation for steps.threadId with Azure SQL syntax."""
+        query = self.builder.create_index_steps_thread_id()
+        assert "IF NOT EXISTS" in query
+        assert "sys.indexes" in query
+        assert "idx_steps_threadId" in query
+        assert "steps" in query
+        assert "[threadId]" in query
+        assert "CREATE INDEX" in query
+
+    def test_create_index_elements_thread_id(self):
+        """Test index creation for elements.threadId with Azure SQL syntax."""
+        query = self.builder.create_index_elements_thread_id()
+        assert "IF NOT EXISTS" in query
+        assert "sys.indexes" in query
+        assert "idx_elements_threadId" in query
+        assert "elements" in query
+        assert "[threadId]" in query
+        assert "CREATE INDEX" in query
 
 
 class TestQueryBuilderCompatibility:
@@ -330,6 +406,9 @@ class TestQueryBuilderCompatibility:
             "delete_thread",
             "delete_thread_memory",
             "delete_user_memory",
+            "create_index_threads_user_identifier",
+            "create_index_steps_thread_id",
+            "create_index_elements_thread_id",
         ]
 
         for method_name in query_methods:
@@ -338,6 +417,37 @@ class TestQueryBuilderCompatibility:
 
             assert len(sqlite_query.strip()) > 0, f"SQLite {method_name} returned empty query"
             assert len(azuresql_query.strip()) > 0, f"Azure SQL {method_name} returned empty query"
+
+    def test_both_dialects_create_valid_indexes(self):
+        """Ensure both dialects create valid index statements."""
+        # Test threads.userIdentifier index
+        sqlite_query = self.sqlite_builder.create_index_threads_user_identifier()
+        azuresql_query = self.azuresql_builder.create_index_threads_user_identifier()
+
+        assert "idx_threads_userIdentifier" in sqlite_query
+        assert "idx_threads_userIdentifier" in azuresql_query
+        assert "threads" in sqlite_query
+        assert "threads" in azuresql_query
+        assert "userIdentifier" in sqlite_query
+        assert "userIdentifier" in azuresql_query
+
+        # Test steps.threadId index
+        sqlite_query = self.sqlite_builder.create_index_steps_thread_id()
+        azuresql_query = self.azuresql_builder.create_index_steps_thread_id()
+
+        assert "idx_steps_threadId" in sqlite_query
+        assert "idx_steps_threadId" in azuresql_query
+        assert "steps" in sqlite_query
+        assert "steps" in azuresql_query
+
+        # Test elements.threadId index
+        sqlite_query = self.sqlite_builder.create_index_elements_thread_id()
+        azuresql_query = self.azuresql_builder.create_index_elements_thread_id()
+
+        assert "idx_elements_threadId" in sqlite_query
+        assert "idx_elements_threadId" in azuresql_query
+        assert "elements" in sqlite_query
+        assert "elements" in azuresql_query
 
 
 class TestDataTypeMapping:
