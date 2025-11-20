@@ -193,9 +193,7 @@ class TestChatHistorySettings:
         assert chat_history.connection_pool_size == 16
 
         # Test custom pool size and overflow
-        chat_history = ChatHistorySettings(
-            connection_pool_size=20, connection_pool_max_overflow=40
-        )
+        chat_history = ChatHistorySettings(connection_pool_size=20, connection_pool_max_overflow=40)
         assert chat_history.connection_pool_size == 20
         assert chat_history.connection_pool_max_overflow == 40
 
