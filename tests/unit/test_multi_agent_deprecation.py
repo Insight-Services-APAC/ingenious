@@ -7,13 +7,11 @@ legacy conversation flow patterns are used.
 import sys
 import uuid
 import warnings
-from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from ingenious.models.chat import ChatRequest, ChatResponse
-
 
 # Mock openai module to avoid import errors
 sys.modules["openai"] = MagicMock()
