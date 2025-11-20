@@ -168,7 +168,7 @@ class OpenAIService:
                     r"This model's maximum context length is (\d+) tokens, "
                     r"however you requested (\d+) tokens \((\d+) in your prompt; "
                     r"(\d+) for the completion\)\. Please reduce your prompt; or "
-                    r"completion length\."
+                    r"completion length"
                 )
                 token_error_match = re.match(token_error_pattern, message)
                 if token_error_match:
