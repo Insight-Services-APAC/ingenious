@@ -25,7 +25,7 @@ _INVALID_CHARS_PATTERN: Final[re.Pattern[str]] = re.compile(r"[^a-z0-9-]")
 
 # TODO: Make a cleaner approach for these word lists (e.g. external file / loader)
 # GitHub Codespaces-style word lists
-ADJECTIVES: Final[tuple[str, ...]] = [
+ADJECTIVES: Final[tuple[str, ...]] = (
     "animated",
     "bouncy",
     "clever",
@@ -50,9 +50,9 @@ ADJECTIVES: Final[tuple[str, ...]] = [
     "vibrant",
     "witty",
     "zesty",
-]
+)
 
-NOUNS: Final[tuple[str, ...]] = [
+NOUNS: Final[tuple[str, ...]] = (
     "disco",
     "ninja",
     "palm",
@@ -77,7 +77,7 @@ NOUNS: Final[tuple[str, ...]] = [
     "bronze",
     "platinum",
     "titanium",
-]
+)
 
 
 def generate_funny_revision_id() -> str:

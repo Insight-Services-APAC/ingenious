@@ -173,6 +173,7 @@ class WorkflowDiscovery:
         """Initialize WorkflowDiscovery with empty workflow and metadata caches."""
         self._workflow_cache: Optional[List[str]] = None
         self._metadata_cache: Dict[str, Dict[str, Any]] = {}
+        self._workflow_caches: Dict[str, List[str]] = {}
 
     def discover_workflows(
         self, force_refresh: bool = False, include_builtin: bool = True
@@ -191,8 +192,6 @@ class WorkflowDiscovery:
         """
         # Use cache key that includes the include_builtin parameter
         cache_key = f"workflows_{include_builtin}"
-        if not hasattr(self, "_workflow_caches"):
-            self._workflow_caches = {}
 
         if cache_key in self._workflow_caches and not force_refresh:
             return self._workflow_caches[cache_key]

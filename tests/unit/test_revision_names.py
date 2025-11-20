@@ -197,7 +197,10 @@ class TestResolveUserRevisionId:
     def test_resolve_user_revision_id_pattern_matching(self):
         """Test that only exact pattern matches are considered."""
         existing_ids = [
-            "myproject",  # Should not match"myproject-1", "myproject-test-2",  # Should not match"other-myproject-3",  # Should not match
+            "myproject",
+            "myproject-1",
+            "myproject-test-2",  # Should not match
+            "other-myproject-3",  # Should not match
         ]
         result = resolve_user_revision_id("myproject", existing_ids)
         assert result == "myproject-2"  # Only myproject-1 should match

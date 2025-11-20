@@ -313,6 +313,9 @@ module = [
   "scripts.*",
   "pyodbc.*",
   "colorlog.*",
+  "tiktoken.*",
+  "openai.*",
+  "yaml.*",
 ]
 ignore_missing_imports = true
 
@@ -331,7 +334,6 @@ module = [
   "ingenious.services.chat_services.llm.*",
   "ingenious.services.chat_services.multi_agent.*",
   "ingenious.services.sql_agent.*",
-  "ingenious.utils.*",
   "ingenious.db.cosmos.*",
   "ingenious.client.azure.builder.*",
   "ingenious.auth.*",

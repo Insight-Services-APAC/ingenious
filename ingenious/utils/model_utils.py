@@ -8,7 +8,7 @@ import csv
 import io
 from typing import Any, Dict, List
 
-import jsonpickle  # type: ignore
+import jsonpickle
 import yaml
 from pydantic import BaseModel
 
