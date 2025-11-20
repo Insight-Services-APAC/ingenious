@@ -49,9 +49,12 @@ class sqlite_ChatHistoryRepository(BaseSQLRepository):
             os.makedirs(db_dir_check)
 
         # Initialize connection pool
-        pool_size = getattr(config.chat_history, "connection_pool_size", 8)
+        pool_size = config.chat_history.connection_pool_size
+        max_overflow = config.chat_history.connection_pool_max_overflow
         connection_factory = SQLiteConnectionFactory(self.db_path)
-        self.pool = ConnectionPool(connection_factory, pool_size=pool_size)
+        self.pool = ConnectionPool(
+            connection_factory, pool_size=pool_size, max_overflow=max_overflow
+        )
 
         # Initialize query builder with SQLite dialect
         query_builder = QueryBuilder(SQLiteDialect())

@@ -36,6 +36,17 @@ class ChatHistorySettings(BaseModel):
     )
     database_name: str = Field("", description="Database name for Azure SQL (ignored for SQLite)")
     memory_path: str = Field("./tmp", description="Path for memory storage and temporary files")
+    connection_pool_size: int = Field(
+        default=8,
+        ge=1,
+        le=100,
+        description="Maximum number of connections in the database connection pool",
+    )
+    connection_pool_max_overflow: int = Field(
+        default=16,
+        ge=0,
+        description="Maximum number of connections that can be created beyond pool_size",
+    )
 
 
 class ModelSettings(BaseModel):

@@ -172,6 +172,8 @@ class TestChatHistorySettings:
         assert chat_history.database_path == "./tmp/high_level_logs.db"
         assert chat_history.database_connection_string == ""
         assert chat_history.memory_path == "./tmp"
+        assert chat_history.connection_pool_size == 8
+        assert chat_history.connection_pool_max_overflow == 16
 
     def test_azure_sql_settings(self):
         """Test Azure SQL configuration."""
@@ -184,6 +186,42 @@ class TestChatHistorySettings:
         assert chat_history.database_type == "azuresql"
         assert "test.database.windows.net" in chat_history.database_connection_string
         assert chat_history.database_name == "test_db"
+
+    def test_connection_pool_size_configuration(self):
+        """Test connection pool size can be configured."""
+        chat_history = ChatHistorySettings(connection_pool_size=16)
+        assert chat_history.connection_pool_size == 16
+
+        # Test custom pool size and overflow
+        chat_history = ChatHistorySettings(
+            connection_pool_size=20, connection_pool_max_overflow=40
+        )
+        assert chat_history.connection_pool_size == 20
+        assert chat_history.connection_pool_max_overflow == 40
+
+    def test_connection_pool_size_validation(self):
+        """Test connection pool size validation constraints."""
+        # Test minimum constraint (ge=1)
+        with pytest.raises(ValidationError):
+            ChatHistorySettings(connection_pool_size=0)
+
+        # Test maximum constraint (le=100)
+        with pytest.raises(ValidationError):
+            ChatHistorySettings(connection_pool_size=101)
+
+        # Test max_overflow minimum constraint (ge=0)
+        with pytest.raises(ValidationError):
+            ChatHistorySettings(connection_pool_max_overflow=-1)
+
+        # Edge cases should work
+        chat_history = ChatHistorySettings(connection_pool_size=1)
+        assert chat_history.connection_pool_size == 1
+
+        chat_history = ChatHistorySettings(connection_pool_size=100)
+        assert chat_history.connection_pool_size == 100
+
+        chat_history = ChatHistorySettings(connection_pool_max_overflow=0)
+        assert chat_history.connection_pool_max_overflow == 0
 
 
 class TestLoggingSettings:

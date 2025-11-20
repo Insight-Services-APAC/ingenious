@@ -200,6 +200,7 @@ class ConnectionPool:
     Attributes:
         connection_factory: Factory for creating database connections.
         pool_size: Maximum number of connections to maintain in the pool.
+        max_overflow: Maximum number of connections beyond pool_size.
         max_retries: Maximum number of retry attempts for connection operations.
         retry_delay: Initial delay in seconds between retry attempts (exponential backoff).
     """
@@ -208,6 +209,7 @@ class ConnectionPool:
         self,
         connection_factory: ConnectionFactory,
         pool_size: int = 8,
+        max_overflow: int = 16,
         max_retries: int = 3,
         retry_delay: float = 0.1,
     ) -> None:
@@ -216,11 +218,13 @@ class ConnectionPool:
         Args:
             connection_factory: Factory for creating database connections.
             pool_size: Maximum number of connections in the pool. Defaults to 8.
+            max_overflow: Maximum overflow connections beyond pool_size. Defaults to 16.
             max_retries: Maximum retry attempts for connection operations. Defaults to 3.
             retry_delay: Initial retry delay in seconds with exponential backoff. Defaults to 0.1.
         """
         self.connection_factory = connection_factory
         self.pool_size = pool_size
+        self.max_overflow = max_overflow
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self._pool: Queue[Any] = Queue(maxsize=pool_size)
@@ -273,7 +277,8 @@ class ConnectionPool:
                 except Empty:
                     # Pool is empty, create a new connection
                     with self._lock:
-                        if self._created_connections < self.pool_size * 2:  # Allow some overflow
+                        max_connections = self.pool_size + self.max_overflow
+                        if self._created_connections < max_connections:
                             conn = self.connection_factory.create_connection()
                             self._created_connections += 1
                         else:

@@ -90,8 +90,11 @@ class ModernRepositoryFactory:
 
         # Create dependencies
         connection_factory = SQLiteConnectionFactory(db_path)
-        pool_size = getattr(config.chat_history, "connection_pool_size", 8)
-        connection_pool = ConnectionPool(connection_factory, pool_size=pool_size)
+        pool_size = config.chat_history.connection_pool_size
+        max_overflow = config.chat_history.connection_pool_max_overflow
+        connection_pool = ConnectionPool(
+            connection_factory, pool_size=pool_size, max_overflow=max_overflow
+        )
         query_builder = QueryBuilder(SQLiteDialect())
 
         return SQLiteChatHistoryRepository(config, query_builder, connection_pool)
@@ -109,8 +112,11 @@ class ModernRepositoryFactory:
 
         # Create dependencies
         connection_factory = AzureSQLConnectionFactory(connection_string)
-        pool_size = getattr(config.chat_history, "connection_pool_size", 8)
-        connection_pool = ConnectionPool(connection_factory, pool_size=pool_size)
+        pool_size = config.chat_history.connection_pool_size
+        max_overflow = config.chat_history.connection_pool_max_overflow
+        connection_pool = ConnectionPool(
+            connection_factory, pool_size=pool_size, max_overflow=max_overflow
+        )
         query_builder = QueryBuilder(AzureSQLDialect())
 
         return AzureSQLChatHistoryRepository(config, query_builder, connection_pool)
