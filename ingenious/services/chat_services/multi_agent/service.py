@@ -3,6 +3,7 @@
 import logging
 import uuid as uuid_module
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional
 
 from jinja2 import Environment
@@ -21,6 +22,27 @@ from ingenious.utils.imports import import_class_with_fallback
 from ingenious.utils.namespace_utils import normalize_workflow_name
 
 logger = get_logger(__name__)
+
+
+@lru_cache(maxsize=32)
+def get_conversation_flow_class(module_name: str, class_name: str) -> type:
+    """Cache imported conversation flow classes to avoid repeated imports.
+
+    This function provides an additional caching layer on top of the existing
+    import caching infrastructure to ensure optimal performance for hot path
+    conversation flow class loading.
+
+    Args:
+        module_name: The fully qualified module name for the conversation flow.
+        class_name: The name of the class to import from the module.
+
+    Returns:
+        The imported conversation flow class.
+
+    Raises:
+        ImportError: If the class cannot be imported.
+    """
+    return import_class_with_fallback(module_name, class_name)
 
 
 class multi_agent_chat_service:
@@ -156,7 +178,7 @@ class multi_agent_chat_service:
                 operation="module_loading",
             )
 
-            conversation_flow_service_class = import_class_with_fallback(module_name, class_name)
+            conversation_flow_service_class = get_conversation_flow_class(module_name, class_name)
             logger.info(
                 "Successfully loaded conversation flow class",
                 class_type=str(type(conversation_flow_service_class)),
@@ -366,8 +388,9 @@ class multi_agent_chat_service:
 
         try:
             # Import the conversation flow class dynamically
-            conversation_flow_service_class = import_class_with_fallback(
-                f"services.chat_services.multi_agent.conversation_flows.{normalized_flow}.{normalized_flow}",
+            module_name = f"services.chat_services.multi_agent.conversation_flows.{normalized_flow}.{normalized_flow}"
+            conversation_flow_service_class = get_conversation_flow_class(
+                module_name,
                 "ConversationFlow",
             )
 
