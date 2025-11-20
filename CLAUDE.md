@@ -125,3 +125,23 @@ INGENIOUS_LOCAL_SQL_DB__DATABASE_PATH=./.tmp/sample_sql.db
 - **Port Conflicts**: Always use port 8000 to avoid conflicts with system port 80
 
 Configuration now relies on environment variables (`INGENIOUS_*`). Ensure `.env` is populated instead of using legacy YAML files.
+
+### Working Directory and Path Resolution
+
+**IMPORTANT CHANGE** (as of v0.2.8): The application no longer changes the global working directory using `os.chdir()`.
+
+- **Working Directory Configuration**: Set via `INGENIOUS_WORKING_DIR` environment variable (defaults to current directory)
+- **Path Resolution**: All relative paths in configuration are automatically resolved to absolute paths based on `working_dir`
+- **Affected Paths**:
+  - `INGENIOUS_CHAT_HISTORY__DATABASE_PATH` (e.g., `./.tmp/chat_history.db` becomes `/path/to/working_dir/.tmp/chat_history.db`)
+  - `INGENIOUS_CHAT_HISTORY__MEMORY_PATH` (defaults to `./.tmp`)
+  - `INGENIOUS_LOCAL_SQL_DB__DATABASE_PATH` (e.g., `./.tmp/sample_sql.db`)
+  - `INGENIOUS_FILE_STORAGE__REVISIONS__PATH` and `INGENIOUS_FILE_STORAGE__DATA__PATH`
+
+**Benefits**:
+- Multiple app instances can coexist with different working directories
+- Tests can run in parallel without directory conflicts
+- No global side effects during app initialization
+- Better containerization support
+
+**Migration**: If you rely on relative paths, ensure `INGENIOUS_WORKING_DIR` is set correctly, or use absolute paths in your configuration.
