@@ -369,7 +369,9 @@ class TestQueryBuilderCompatibility:
 
     def test_both_dialects_support_memory_context_query(self):
         """Ensure both dialects support the optimized memory context query."""
-        sqlite_query = self.sqlite_builder.select_thread_memory_context(limit=10, content_length=200)
+        sqlite_query = self.sqlite_builder.select_thread_memory_context(
+            limit=10, content_length=200
+        )
         azuresql_query = self.azuresql_builder.select_thread_memory_context(
             limit=10, content_length=200
         )
