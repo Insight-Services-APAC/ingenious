@@ -1,5 +1,6 @@
 """Multi-agent chat service core implementation."""
 
+import asyncio
 import logging
 import uuid as uuid_module
 from abc import ABC, abstractmethod
@@ -287,49 +288,55 @@ class multi_agent_chat_service:
         # Save chat history if memory_record is enabled
         if getattr(chat_request, "memory_record", True):
             try:
-                # Save user message
+                # Save user message, agent response, and memory in parallel
                 if chat_request.user_id and chat_request.thread_id:
                     from ingenious.models.message import Message
 
-                    user_message_id = await self.chat_history_repository.add_message(
-                        Message(
-                            user_id=chat_request.user_id,
-                            thread_id=chat_request.thread_id,
-                            role="user",
-                            content=chat_request.user_prompt,
-                        )
-                    )
-                    logger.info(
-                        "Saved user message",
-                        message_id=user_message_id,
+                    # Create message objects
+                    user_message = Message(
+                        user_id=chat_request.user_id,
                         thread_id=chat_request.thread_id,
+                        role="user",
+                        content=chat_request.user_prompt,
+                    )
+                    agent_message = Message(
+                        user_id=chat_request.user_id,
+                        thread_id=chat_request.thread_id,
+                        role="assistant",
+                        content=agent_response.agent_response,
                     )
 
-                    # Save agent response
-                    agent_message_id = await self.chat_history_repository.add_message(
-                        Message(
-                            user_id=chat_request.user_id,
-                            thread_id=chat_request.thread_id,
-                            role="assistant",
-                            content=agent_response.agent_response,
-                        )
-                    )
-                    logger.info(
-                        "Saved agent message",
-                        message_id=agent_message_id,
-                        thread_id=chat_request.thread_id,
-                    )
+                    # Prepare tasks for parallel execution
+                    tasks = [
+                        self.chat_history_repository.add_message(user_message),
+                        self.chat_history_repository.add_message(agent_message),
+                    ]
 
-                    # Save memory summary if available
+                    # Add memory task if available
                     if hasattr(agent_response, "memory_summary") and agent_response.memory_summary:
-                        memory_id = await self.chat_history_repository.add_memory(
-                            Message(
-                                user_id=chat_request.user_id,
-                                thread_id=chat_request.thread_id,
-                                role="memory_assistant",
-                                content=agent_response.memory_summary,
-                            )
+                        memory_message = Message(
+                            user_id=chat_request.user_id,
+                            thread_id=chat_request.thread_id,
+                            role="memory_assistant",
+                            content=agent_response.memory_summary,
                         )
+                        tasks.append(self.chat_history_repository.add_memory(memory_message))
+
+                    # Execute all saves in parallel
+                    results = await asyncio.gather(*tasks, return_exceptions=False)
+
+                    # Log results
+                    user_message_id = results[0]
+                    agent_message_id = results[1]
+                    logger.info(
+                        "Saved chat history in parallel",
+                        user_msg_id=user_message_id,
+                        agent_msg_id=agent_message_id,
+                        thread_id=chat_request.thread_id,
+                    )
+
+                    if len(results) > 2:
+                        memory_id = results[2]
                         logger.info(
                             "Saved memory",
                             memory_id=memory_id,
