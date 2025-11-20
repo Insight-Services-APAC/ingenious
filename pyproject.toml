@@ -353,27 +353,7 @@ disallow_untyped_decorators = false
 no_implicit_optional = false
 warn_return_any = false
 
-[[tool.mypy.overrides]]
-# Relax mypy only for the *library-internal* test package
-module = ["ingenious.chunk.tests.*"]
-ignore_errors = true
-disallow_untyped_defs = false        # don't require -> None, param hints, etc.
-ignore_missing_imports = true        # silence missing stubs (e.g. `regex`)
-check_untyped_defs = false
-disallow_untyped_decorators = false
 
-[[tool.mypy.overrides]]
-# Relax mypy for azure_search test packages which are internal tests
-module = [
-  "ingenious.services.azure_search.tests.*",
-]
-ignore_errors = true
-disallow_untyped_defs = false
-ignore_missing_imports = true
-check_untyped_defs = false
-disallow_untyped_decorators = false
-warn_return_any = false
-no_implicit_optional = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
