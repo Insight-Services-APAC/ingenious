@@ -14,6 +14,7 @@ from .environment import get_settings_config
 from .models import (
     AzureSearchSettings,
     AzureSqlSettings,
+    CacheSettings,
     ChatHistorySettings,
     ChatServiceSettings,
     CosmosSettings,
@@ -105,6 +106,11 @@ class IngeniousSettings(BaseSettings):
 
     cosmos_service: Optional[CosmosSettings] = Field(
         default=None, description="Azure Cosmos DB service configuration (optional)"
+    )
+
+    cache: CacheSettings = Field(
+        default_factory=lambda: CacheSettings(),
+        description="Response caching configuration",
     )
 
     @field_validator("models", mode="before")

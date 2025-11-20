@@ -70,6 +70,7 @@ dev = [
 # Core features - common production functionality
 core = [
   "aiosqlite==0.21.0",
+  "cachetools>=5.5.0",
   "fastapi-cli==0.0.7",
   "jinja2==3.1.6",
   "jsonpickle==4.1.1",

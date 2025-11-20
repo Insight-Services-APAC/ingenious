@@ -6,6 +6,7 @@ backward compatibility with code that imports from ingenious.config.settings.
 
 from ingenious.config.main_settings import IngeniousSettings
 from ingenious.config.models import (
+    CacheSettings,
     ChatHistorySettings,
     LoggingSettings,
     ModelSettings,
@@ -14,6 +15,7 @@ from ingenious.config.models import (
 
 __all__ = [
     "IngeniousSettings",
+    "CacheSettings",
     "ChatHistorySettings",
     "LoggingSettings",
     "ModelSettings",

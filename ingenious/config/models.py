@@ -379,3 +379,54 @@ class CosmosSettings(BaseModel):
     )
     tenant_id: str = Field("", description="Azure tenant ID for service principal authentication")
     endpoint: str = Field("", description="Azure service endpoint URL")
+
+
+class CacheSettings(BaseModel):
+    """Configuration for response caching.
+
+    Enables caching of API responses, search results, and other computationally
+    expensive operations. Supports both in-memory (LRU) and Redis backends.
+    """
+
+    enabled: bool = Field(False, description="Enable response caching (disabled by default)")
+    backend: str = Field(
+        "memory",
+        description="Cache backend: 'memory' for in-memory LRU, 'redis' for Redis",
+    )
+    redis_url: str = Field(
+        "redis://localhost:6379",
+        description="Redis connection URL (only used if backend='redis')",
+    )
+    default_ttl: int = Field(
+        300,
+        description="Default cache TTL in seconds (5 minutes)",
+    )
+    max_size: int = Field(
+        1000,
+        description="Maximum number of cached items for in-memory backend",
+    )
+
+    @field_validator("backend")
+    @classmethod
+    def validate_backend(cls, v: str) -> str:
+        """Validate cache backend type."""
+        valid_backends = {"memory", "redis"}
+        if v.lower() not in valid_backends:
+            raise ValueError(f"Cache backend must be one of: {', '.join(valid_backends)}")
+        return v.lower()
+
+    @field_validator("default_ttl")
+    @classmethod
+    def validate_default_ttl(cls, v: int) -> int:
+        """Validate default TTL value."""
+        if v < 0:
+            raise ValueError("Default TTL must be non-negative")
+        return v
+
+    @field_validator("max_size")
+    @classmethod
+    def validate_max_size(cls, v: int) -> int:
+        """Validate max cache size."""
+        if v < 1:
+            raise ValueError("Max cache size must be at least 1")
+        return v
