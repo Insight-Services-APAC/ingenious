@@ -91,18 +91,21 @@ class multi_agent_chat_service:
         if not chat_request.thread_id:
             chat_request.thread_id = str(uuid_module.uuid4())
 
-        # Get thread messages & add to messages list
-        thread_messages = await self.chat_history_repository.get_thread_messages(
-            chat_request.thread_id
+        # Get optimized thread memory context (last 10 messages with truncated content)
+        memory_context = await self.chat_history_repository.get_thread_memory_context(
+            chat_request.thread_id, limit=10, content_length=200
         )
-        # Build thread memory from messages
-        if thread_messages:
-            memory_parts = []
-            for msg in thread_messages[-10:]:  # Use last 10 messages
-                memory_parts.append(f"{msg.role}: {msg.content[:200]}...")
+        # Build thread memory from context
+        if memory_context:
+            memory_parts = [f"{msg['role']}: {msg['content']}..." for msg in memory_context]
             chat_request.thread_memory = "\n".join(memory_parts)
         else:
             chat_request.thread_memory = "no existing context."
+
+        # Get thread messages for full history (still needed for thread_chat_history)
+        thread_messages = await self.chat_history_repository.get_thread_messages(
+            chat_request.thread_id
+        )
 
         logger.info(
             "Current memory state",

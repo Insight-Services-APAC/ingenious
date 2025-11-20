@@ -215,6 +215,20 @@ class TestSQLiteQueryBuilder:
         query = self.builder.get_query("non_existent_query")
         assert query == ""
 
+    def test_select_thread_memory_context(self):
+        """Test optimized thread memory context query with SQLite syntax."""
+        query = self.builder.select_thread_memory_context(limit=10, content_length=200)
+        assert "FROM chat_history" in query
+        assert "WHERE thread_id = ?" in query
+        assert "SUBSTR(content, 1, 200)" in query
+        assert "LIMIT 10" in query
+
+    def test_select_thread_memory_context_custom_params(self):
+        """Test thread memory context query with custom limit and content length."""
+        query = self.builder.select_thread_memory_context(limit=5, content_length=100)
+        assert "SUBSTR(content, 1, 100)" in query
+        assert "LIMIT 5" in query
+
 
 class TestAzureSQLQueryBuilder:
     """Test QueryBuilder with Azure SQL dialect."""
@@ -258,6 +272,20 @@ class TestAzureSQLQueryBuilder:
         assert "FROM (" in query
         assert "ROW_NUMBER() OVER" in query
         assert "ORDER BY timestamp ASC" in query
+
+    def test_select_thread_memory_context(self):
+        """Test optimized thread memory context query with Azure SQL syntax."""
+        query = self.builder.select_thread_memory_context(limit=10, content_length=200)
+        assert "SELECT TOP 10" in query
+        assert "FROM chat_history" in query
+        assert "WHERE thread_id = ?" in query
+        assert "SUBSTRING(content, 1, 200)" in query
+
+    def test_select_thread_memory_context_custom_params(self):
+        """Test thread memory context query with custom limit and content length."""
+        query = self.builder.select_thread_memory_context(limit=5, content_length=100)
+        assert "SELECT TOP 5" in query
+        assert "SUBSTRING(content, 1, 100)" in query
 
 
 class TestQueryBuilderCompatibility:
@@ -338,6 +366,25 @@ class TestQueryBuilderCompatibility:
 
             assert len(sqlite_query.strip()) > 0, f"SQLite {method_name} returned empty query"
             assert len(azuresql_query.strip()) > 0, f"Azure SQL {method_name} returned empty query"
+
+    def test_both_dialects_support_memory_context_query(self):
+        """Ensure both dialects support the optimized memory context query."""
+        sqlite_query = self.sqlite_builder.select_thread_memory_context(limit=10, content_length=200)
+        azuresql_query = self.azuresql_builder.select_thread_memory_context(
+            limit=10, content_length=200
+        )
+
+        # Both queries should be non-empty and contain key elements
+        assert len(sqlite_query.strip()) > 0, "SQLite memory context query returned empty"
+        assert len(azuresql_query.strip()) > 0, "Azure SQL memory context query returned empty"
+
+        # SQLite should use SUBSTR, Azure SQL should use SUBSTRING
+        assert "SUBSTR" in sqlite_query or "SUBSTRING" in sqlite_query
+        assert "SUBSTRING" in azuresql_query
+
+        # Both should filter by thread_id
+        assert "WHERE thread_id = ?" in sqlite_query
+        assert "WHERE thread_id = ?" in azuresql_query
 
 
 class TestDataTypeMapping:

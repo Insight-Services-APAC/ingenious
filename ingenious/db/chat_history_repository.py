@@ -506,6 +506,27 @@ class ChatHistoryRepository:
         """
         return cast(Optional[List[Message]], await self.repository.get_thread_memory(thread_id))
 
+    async def get_thread_memory_context(
+        self, thread_id: str, limit: int = 10, content_length: int = 200
+    ) -> list[dict[str, str]]:
+        """Retrieve optimized memory context for a thread with truncated content.
+
+        This method fetches only the last N messages with content truncated at the
+        database level, reducing data transfer and improving performance.
+
+        Args:
+            thread_id: Unique identifier for the thread.
+            limit: Maximum number of recent messages to retrieve. Defaults to 10.
+            content_length: Maximum content length per message. Defaults to 200.
+
+        Returns:
+            List of dicts with 'role' and 'content' keys, ordered oldest to newest.
+        """
+        return cast(
+            list[dict[str, str]],
+            await self.repository.get_thread_memory_context(thread_id, limit, content_length),
+        )
+
     async def get_threads_for_user(
         self, identifier: str, thread_id: Optional[str]
     ) -> Optional[List[IChatHistoryRepository.ThreadDict]]:

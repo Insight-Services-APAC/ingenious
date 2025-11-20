@@ -310,6 +310,31 @@ class BaseSQLRepository(IChatHistoryRepository, ABC):
             return [self._row_to_message(row) for row in result]
         return []
 
+    async def get_thread_memory_context(
+        self, thread_id: str, limit: int = 10, content_length: int = 200
+    ) -> list[dict[str, str]]:
+        """Get optimized memory context for a thread with truncated content.
+
+        This method fetches only the last N messages with content truncated at the
+        database level, reducing data transfer and improving performance.
+
+        Args:
+            thread_id: Thread identifier.
+            limit: Maximum number of recent messages to retrieve. Defaults to 10.
+            content_length: Maximum content length per message. Defaults to 200.
+
+        Returns:
+            List of dicts with 'role' and 'content' keys, ordered oldest to newest.
+        """
+        query = self.query_builder.select_thread_memory_context(limit, content_length)
+        params = [thread_id]
+
+        result = self._execute_sql(query, params, expect_results=True)
+        if result:
+            # Result is already in the format we need: [{'role': ..., 'content': ...}, ...]
+            return result
+        return []
+
     async def delete_thread(self, thread_id: str) -> None:
         """Delete all messages for a thread.
 

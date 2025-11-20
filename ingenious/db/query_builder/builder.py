@@ -325,6 +325,47 @@ class QueryBuilder:
                 {limit_clause}
             """
 
+    def select_thread_memory_context(self, limit: int = 10, content_length: int = 200) -> str:
+        """Generate SELECT query for retrieving thread memory context with truncated content.
+
+        This optimized query fetches only the last N messages with content truncated to
+        the specified length, reducing data transfer and moving truncation to the database.
+
+        Args:
+            limit: Maximum number of recent messages to retrieve. Defaults to 10.
+            content_length: Maximum content length to return per message. Defaults to 200.
+
+        Returns:
+            Database-specific query to select recent messages with truncated content,
+            ordered by timestamp ascending (oldest to newest).
+        """
+        if isinstance(self.dialect, AzureSQLDialect):
+            # nosec B608: table name 'chat_history' is hardcoded constant, parameters use ? placeholders
+            return f"""
+                SELECT TOP {limit} role, SUBSTRING(content, 1, {content_length}) as content
+                FROM (
+                    SELECT role, content,
+                           ROW_NUMBER() OVER (ORDER BY timestamp DESC) as rn
+                    FROM chat_history
+                    WHERE thread_id = ?
+                ) AS ranked
+                WHERE rn <= {limit}
+                ORDER BY rn DESC
+            """
+        else:
+            # nosec B608: table name 'chat_history' is hardcoded constant, parameters use ? placeholders
+            return f"""
+                SELECT role, SUBSTR(content, 1, {content_length}) as content
+                FROM (
+                    SELECT role, content
+                    FROM chat_history
+                    WHERE thread_id = ?
+                    ORDER BY timestamp DESC
+                    LIMIT {limit}
+                ) AS last_messages
+                ORDER BY rowid DESC
+            """
+
     def delete_thread(self) -> str:
         """Generate DELETE query for removing all messages in a thread.
 
