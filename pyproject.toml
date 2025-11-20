@@ -248,6 +248,8 @@ convention = "google"
 # Enforce PEP 8 naming conventions
 # Classes should use PascalCase, functions/methods snake_case, constants UPPER_SNAKE_CASE
 ignore-names = []  # No exceptions - enforce strict naming
+# Note: Deprecated methods in v0.2.8 (GetConfig, Get_Models, etc.) will show N802 violations
+# These are intentional and will be removed in v0.3.0 - see MIGRATION_GUIDE_v0.3.0.md
 
 [tool.mypy]
 # Global mypy configuration
