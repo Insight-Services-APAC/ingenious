@@ -388,7 +388,7 @@ addopts = [
   "--cov=ingenious",
   "--cov-report=term-missing",
   "--cov-report=html",
-  "--cov-fail-under=20",
+  "--cov-fail-under=60",
   "-p",
   "no:doctest",
 ]
