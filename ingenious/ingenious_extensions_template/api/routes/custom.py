@@ -36,8 +36,8 @@ class Api_Routes(IApiRoutes):
             # logger = logging.getLogger(__name__)
 
             # config = get_config()
-            # fs = files_repository.FileStorage(config=config, Category="revisions")
-            # fs_data = files_repository.FileStorage(config=config, Category="data")
+            # fs = files_repository.FileStorage(config=config, category="revisions")
+            # fs_data = files_repository.FileStorage(config=config, category="data")
 
             # Todo implement the processing logic
 

@@ -97,13 +97,13 @@ class Container(containers.DeclarativeContainer):
     file_storage_data = providers.Factory(
         FileStorage,
         config=config,
-        Category="data",
+        category="data",
     )
 
     file_storage_revisions = providers.Factory(
         FileStorage,
         config=config,
-        Category="revisions",
+        category="revisions",
     )
 
     # Business services - using Factory for per-request chat services

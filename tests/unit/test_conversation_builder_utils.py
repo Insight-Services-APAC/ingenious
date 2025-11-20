@@ -206,7 +206,7 @@ class TestSyncPromptTemplates:
         await Sync_Prompt_Templates(mock_config, "v1")
 
         # Verify FileStorage was created correctly
-        mock_file_storage.assert_called_once_with(mock_config, Category="revisions")
+        mock_file_storage.assert_called_once_with(mock_config, category="revisions")
 
         # Verify list_files was called
         mock_fs_instance.list_files.assert_called_once_with(file_path="prompts/v1")
@@ -239,7 +239,7 @@ class TestSyncPromptTemplates:
         await Sync_Prompt_Templates(mock_config, "v1")
 
         # Verify FileStorage was created
-        mock_file_storage.assert_called_once_with(mock_config, Category="revisions")
+        mock_file_storage.assert_called_once_with(mock_config, category="revisions")
 
         # Verify debug log was called for local storage
         mock_logger.debug.assert_called_once_with(

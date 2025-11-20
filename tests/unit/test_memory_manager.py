@@ -31,7 +31,7 @@ class TestMemoryManager:
 
             assert manager.config is self.mock_config
             assert manager.memory_path == "/test/memory"
-            mock_fs.assert_called_once_with(self.mock_config, Category="data")
+            mock_fs.assert_called_once_with(self.mock_config, category="data")
 
     def test_init_with_custom_memory_path(self):
         """Test MemoryManager initialization with custom memory path."""

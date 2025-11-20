@@ -257,7 +257,7 @@ def get_file_storage_data() -> FileStorage:
         FileStorage: File storage instance configured for data files.
     """
     config = get_config()
-    return FileStorage(config, Category="data")
+    return FileStorage(config, category="data")
 
 
 def get_file_storage_revisions() -> FileStorage:
@@ -267,7 +267,7 @@ def get_file_storage_revisions() -> FileStorage:
         FileStorage: File storage instance configured for revision files.
     """
     config = get_config()
-    return FileStorage(config, Category="revisions")
+    return FileStorage(config, category="revisions")
 
 
 def get_project_config() -> IngeniousSettings:

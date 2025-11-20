@@ -29,7 +29,7 @@ class MemoryManager:
         """
         self.config = config
         self.memory_path = memory_path or config.chat_history.memory_path
-        self.file_storage = FileStorage(config, Category="data")
+        self.file_storage = FileStorage(config, category="data")
 
     def _get_memory_file_path(self, thread_id: Optional[str] = None) -> tuple[str, str]:
         """Get the file path and name for a memory file.

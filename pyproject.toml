@@ -238,11 +238,16 @@ ingen = "ingenious.cli:app"
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I", "D"]
+extend-select = ["I", "D", "N"]
 ignore = ["E402"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.pep8-naming]
+# Enforce PEP 8 naming conventions
+# Classes should use PascalCase, functions/methods snake_case, constants UPPER_SNAKE_CASE
+ignore-names = []  # No exceptions - enforce strict naming
 
 [tool.mypy]
 # Global mypy configuration

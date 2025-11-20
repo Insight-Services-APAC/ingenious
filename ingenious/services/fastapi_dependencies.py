@@ -100,14 +100,14 @@ def get_file_storage_data(
     config: IngeniousSettings = Depends(get_config),
 ) -> FileStorage:
     """Get file storage for data."""
-    return FileStorage(config=config, Category="data")
+    return FileStorage(config=config, category="data")
 
 
 def get_file_storage_revisions(
     config: IngeniousSettings = Depends(get_config),
 ) -> FileStorage:
     """Get file storage for revisions."""
-    return FileStorage(config=config, Category="revisions")
+    return FileStorage(config=config, category="revisions")
 
 
 def get_conditional_security(

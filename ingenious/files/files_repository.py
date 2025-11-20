@@ -64,18 +64,18 @@ class FileStorage:
     based on configuration settings.
     """
 
-    def __init__(self, config: IngeniousSettings, Category: str = "revisions"):
+    def __init__(self, config: IngeniousSettings, category: str = "revisions"):
         """Initialize the FileStorage with configuration and category.
 
         Args:
             config: The ingenious settings configuration.
-            Category: The file storage category (e.g., 'revisions'). Defaults to 'revisions'.
+            category: The file storage category (e.g., 'revisions'). Defaults to 'revisions'.
         """
         self.config = config
-        self.add_sub_folders = getattr(self.config.file_storage, Category).add_sub_folders
+        self.add_sub_folders = getattr(self.config.file_storage, category).add_sub_folders
 
         # Get the file storage config for the specified category
-        fs_config = getattr(self.config.file_storage, Category)
+        fs_config = getattr(self.config.file_storage, category)
         storage_type = fs_config.storage_type
 
         # Build module name based on the category's storage type

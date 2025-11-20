@@ -77,6 +77,67 @@ uv run mypy .
 
 Refer to the mypy prompt in .github/prompts for a better understanding of expected type safety in a PR.
 
+### Naming Conventions (PEP 8)
+
+All Python code must follow **PEP 8 naming conventions**. This ensures consistency and maintainability across the codebase.
+
+#### Naming Rules
+
+1. **Classes**: Use `PascalCase` (also known as CapWords)
+   - ✅ `class MultiAgentChatService:`
+   - ❌ `class multi_agent_chat_service:`
+
+2. **Functions and Methods**: Use `snake_case`
+   - ✅ `def get_memory_path():`
+   - ❌ `def Get_Memory_Path():` or `def GetMemoryPath():`
+
+3. **Constants**: Use `UPPER_SNAKE_CASE`
+   - ✅ `MAX_RETRIES = 3`
+   - ❌ `maxRetries = 3`
+
+4. **Variables and Parameters**: Use `snake_case`
+   - ✅ `def __init__(self, category: str):`
+   - ❌ `def __init__(self, Category: str):`
+
+5. **Private Members**: Prefix with single underscore
+   - ✅ `self._internal_state`
+   - ❌ `self.internalState`
+
+#### Enforcement
+
+Naming compliance is enforced via:
+- `ruff` with PEP 8 naming rules (configured in `pyproject.toml`)
+- pre-commit hooks that run on every commit
+
+Run checks manually:
+```bash
+uv run ruff check --select N .
+```
+
+#### Deprecation Strategy
+
+When renaming public APIs, we follow a two-phase approach:
+
+**Phase 1 (v0.2.8)**: Add new names with deprecation warnings on old names
+```python
+class MultiAgentChatService:  # New name
+    def get_memory_path(self):  # New name
+        return self._memory_path
+    
+    def Get_Memory_Path(self):  # Old name (deprecated)
+        warnings.warn(
+            "Get_Memory_Path is deprecated, use get_memory_path instead",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return self.get_memory_path()
+
+# Backward compatibility alias
+multi_agent_chat_service = MultiAgentChatService
+```
+
+**Phase 2 (v0.3.0)**: Remove deprecated names entirely
+
 ### Docstring Standard
 
 All Python code must use **Google-style docstrings**. This ensures consistency and enables automated documentation generation.

@@ -122,7 +122,7 @@ async def Sync_Prompt_Templates(_config: IngeniousSettings, revision: str) -> No
         _config: The Ingenious settings configuration.
         revision: The revision identifier for template versioning.
     """
-    fs = FileStorage(_config, Category="revisions")
+    fs = FileStorage(_config, category="revisions")
     # Check the storage type and handle Jinja files accordingly
     azure_template_dir = "prompts/" + revision
     if _config.file_storage.revisions.storage_type != "local":
