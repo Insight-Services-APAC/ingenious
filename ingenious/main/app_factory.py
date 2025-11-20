@@ -70,18 +70,12 @@ class FastAgentAPI:
         self.app.add_middleware(RequestContextMiddleware)
 
         # Add CORS middleware
-        origins = [
-            "http://localhost",
-            "http://localhost:5173",
-            "http://localhost:4173",
-        ]
-
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=origins,
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_origins=self.config.web_configuration.cors_allowed_origins,
+            allow_credentials=self.config.web_configuration.cors_allow_credentials,
+            allow_methods=self.config.web_configuration.cors_allow_methods,
+            allow_headers=self.config.web_configuration.cors_allow_headers,
         )
 
         # Add authentication middleware if configured

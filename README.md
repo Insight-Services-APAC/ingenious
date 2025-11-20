@@ -105,6 +105,12 @@ Set up ingenious locally first and then migrate to Azure services as shown in th
     INGENIOUS_WEB_CONFIGURATION__IP_ADDRESS=0.0.0.0
     INGENIOUS_WEB_CONFIGURATION__AUTHENTICATION__ENABLE=false
 
+    # CORS Configuration (comma-separated list of allowed origins)
+    INGENIOUS_WEB_CONFIGURATION__CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:5173,http://localhost:4173
+    INGENIOUS_WEB_CONFIGURATION__CORS_ALLOW_CREDENTIALS=true
+    # For production, restrict to specific domains:
+    # INGENIOUS_WEB_CONFIGURATION__CORS_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
+
     # Chat Service Configuration (REQUIRED)
     INGENIOUS_CHAT_SERVICE__TYPE=multi_agent
 

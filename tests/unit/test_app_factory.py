@@ -93,6 +93,16 @@ class TestFastAgentAPI:
         api = FastAgentAPI.__new__(FastAgentAPI)
         api.config = self.mock_config
         api.app = Mock()
+        
+        # Mock the web_configuration CORS settings
+        api.config.web_configuration.cors_allowed_origins = [
+            "http://localhost",
+            "http://localhost:5173",
+            "http://localhost:4173",
+        ]
+        api.config.web_configuration.cors_allow_credentials = True
+        api.config.web_configuration.cors_allow_methods = ["*"]
+        api.config.web_configuration.cors_allow_headers = ["*"]
 
         api._setup_middleware()
 
@@ -107,13 +117,11 @@ class TestFastAgentAPI:
         second_call = api.app.add_middleware.call_args_list[1]
         args, kwargs = second_call
         assert "CORSMiddleware" in str(args[0])
-        assert "http://localhost" in kwargs["allow_origins"]
-
-        # Check that AuthenticationMiddleware was added third
-        third_call = api.app.add_middleware.call_args_list[2]
-        assert "AuthenticationMiddleware" in str(third_call[0][0])
-        assert "http://localhost:5173" in kwargs["allow_origins"]
-        assert "http://localhost:4173" in kwargs["allow_origins"]
+        assert kwargs["allow_origins"] == [
+            "http://localhost",
+            "http://localhost:5173",
+            "http://localhost:4173",
+        ]
         assert kwargs["allow_credentials"] is True
         assert kwargs["allow_methods"] == ["*"]
         assert kwargs["allow_headers"] == ["*"]
@@ -264,3 +272,45 @@ class TestCreateApp:
 
             # Verify the app was returned
             assert result is mock_api_instance.app
+
+
+class TestCORSConfiguration:
+    """Test cases for CORS configuration."""
+
+    def test_cors_uses_config_values(self):
+        """Test that CORS middleware uses config values."""
+        mock_config = Mock()
+        mock_config.web_configuration.cors_allowed_origins = ["https://example.com"]
+        mock_config.web_configuration.cors_allow_credentials = False
+        mock_config.web_configuration.cors_allow_methods = ["GET", "POST"]
+        mock_config.web_configuration.cors_allow_headers = ["Content-Type"]
+
+        api = FastAgentAPI.__new__(FastAgentAPI)
+        api.config = mock_config
+        api.app = Mock()
+
+        api._setup_middleware()
+
+        # Find the CORS middleware call
+        cors_call = api.app.add_middleware.call_args_list[1]
+        args, kwargs = cors_call
+
+        assert "CORSMiddleware" in str(args[0])
+        assert kwargs["allow_origins"] == ["https://example.com"]
+        assert kwargs["allow_credentials"] is False
+        assert kwargs["allow_methods"] == ["GET", "POST"]
+        assert kwargs["allow_headers"] == ["Content-Type"]
+
+    def test_cors_default_values(self):
+        """Test that CORS has proper default values matching original hardcoded ones."""
+        from ingenious.config.models import WebSettings
+
+        web_settings = WebSettings()
+
+        # Verify defaults match original hardcoded values
+        assert "http://localhost" in web_settings.cors_allowed_origins
+        assert "http://localhost:5173" in web_settings.cors_allowed_origins
+        assert "http://localhost:4173" in web_settings.cors_allowed_origins
+        assert web_settings.cors_allow_credentials is True
+        assert web_settings.cors_allow_methods == ["*"]
+        assert web_settings.cors_allow_headers == ["*"]

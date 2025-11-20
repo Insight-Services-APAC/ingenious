@@ -4,6 +4,8 @@ This module contains all the BaseModel classes that define
 the structure and validation for different configuration sections.
 """
 
+from typing import List
+
 from pydantic import (
     BaseModel,
     Field,
@@ -257,6 +259,19 @@ class WebSettings(BaseModel):
             jwt_access_token_expire_minutes=1440,
             jwt_refresh_token_expire_days=7,
         )
+    )
+    cors_allowed_origins: List[str] = Field(
+        default=["http://localhost", "http://localhost:5173", "http://localhost:4173"],
+        description="CORS allowed origins (comma-separated in env vars)",
+    )
+    cors_allow_credentials: bool = Field(
+        default=True, description="Allow credentials in CORS requests"
+    )
+    cors_allow_methods: List[str] = Field(
+        default=["*"], description="Allowed HTTP methods for CORS"
+    )
+    cors_allow_headers: List[str] = Field(
+        default=["*"], description="Allowed HTTP headers for CORS"
     )
 
     @field_validator("port")
