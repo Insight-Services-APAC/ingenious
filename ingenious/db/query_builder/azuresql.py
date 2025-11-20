@@ -101,3 +101,22 @@ class AzureSQLDialect(Dialect):
             "json": "NVARCHAR(MAX)",
             "array": "NVARCHAR(MAX)",
         }
+
+    def get_create_index_syntax(
+        self, index_name: str, table_name: str, column_name: str
+    ) -> str:
+        """Get Azure SQL index creation syntax.
+
+        Args:
+            index_name: Name for the index.
+            table_name: Table to create index on.
+            column_name: Column to index.
+
+        Returns:
+            SQL Server CREATE INDEX with conditional existence check.
+        """
+        # nosec B608: index_name, table_name, and column_name are validated by caller
+        return f"""
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = '{index_name}' AND object_id = OBJECT_ID('{table_name}'))
+CREATE INDEX [{index_name}] ON {table_name} ([{column_name}])
+        """.strip()

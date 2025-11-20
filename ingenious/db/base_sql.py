@@ -35,6 +35,7 @@ class BaseSQLRepository(IChatHistoryRepository, ABC):
         self.query_builder = query_builder
         self._init_connection()
         self._create_tables()
+        self._create_indexes()
 
     @abstractmethod
     def _init_connection(self) -> None:
@@ -74,6 +75,32 @@ class BaseSQLRepository(IChatHistoryRepository, ABC):
 
         for query in table_queries:
             self._execute_sql(query, expect_results=False)
+
+    def _create_indexes(self) -> None:
+        """Create performance indexes for get_threads_for_user query optimization.
+
+        Creates indexes on:
+        - threads.userIdentifier: Speeds up user thread lookups
+        - steps.threadId: Speeds up step lookups by thread
+        - elements.threadId: Speeds up element lookups by thread
+
+        These indexes optimize the sequential queries in get_threads_for_user
+        by allowing the database to quickly locate related records.
+        """
+        index_queries = [
+            self.query_builder.create_index_threads_user_identifier(),
+            self.query_builder.create_index_steps_thread_id(),
+            self.query_builder.create_index_elements_thread_id(),
+        ]
+
+        for query in index_queries:
+            try:
+                self._execute_sql(query, expect_results=False)
+            except Exception:
+                # Silently ignore errors if indexes already exist or tables don't exist
+                # This allows the application to work with databases that don't have
+                # the threads/steps/elements tables (they may be optional)
+                pass
 
     async def add_message(self, message: Message) -> str:
         """Add a message to the chat history.

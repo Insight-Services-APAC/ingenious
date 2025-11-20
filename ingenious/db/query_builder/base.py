@@ -79,3 +79,19 @@ class Dialect(ABC):
             Dictionary mapping generic type names to database-specific types.
         """
         pass
+
+    @abstractmethod
+    def get_create_index_syntax(
+        self, index_name: str, table_name: str, column_name: str
+    ) -> str:
+        """Get index creation syntax for this database.
+
+        Args:
+            index_name: Name for the index.
+            table_name: Table to create index on.
+            column_name: Column to index.
+
+        Returns:
+            Database-specific CREATE INDEX SQL statement.
+        """
+        pass

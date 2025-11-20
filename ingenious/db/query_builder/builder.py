@@ -358,6 +358,36 @@ class QueryBuilder:
             WHERE user_id = ?
         """
 
+    def create_index_threads_user_identifier(self) -> str:
+        """Generate CREATE INDEX query for threads.userIdentifier.
+
+        Returns:
+            Database-specific SQL to create index on threads.userIdentifier column.
+        """
+        return self.dialect.get_create_index_syntax(
+            "idx_threads_userIdentifier", "threads", "userIdentifier"
+        )
+
+    def create_index_steps_thread_id(self) -> str:
+        """Generate CREATE INDEX query for steps.threadId.
+
+        Returns:
+            Database-specific SQL to create index on steps.threadId column.
+        """
+        return self.dialect.get_create_index_syntax(
+            "idx_steps_threadId", "steps", "threadId"
+        )
+
+    def create_index_elements_thread_id(self) -> str:
+        """Generate CREATE INDEX query for elements.threadId.
+
+        Returns:
+            Database-specific SQL to create index on elements.threadId column.
+        """
+        return self.dialect.get_create_index_syntax(
+            "idx_elements_threadId", "elements", "threadId"
+        )
+
     def get_query(self, query_type: str, **kwargs: Any) -> str:
         """Get a query by type name with optional parameters.
 
