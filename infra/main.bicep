@@ -41,8 +41,8 @@ param searchServiceName string = 'ingenioussearchsvc'
 @description('Optional public IPv4 address to allow through the SQL server firewall (leave empty to skip)')
 param clientIpAddress string = ''
 
-@description('Capacity for the gpt-4o-mini deployment (requests/minute)')
-param gpt4oMiniCapacity int = 120
+@description('Capacity for the gpt-5-mini deployment (requests/minute)')
+param gpt5MiniCapacity int = 120
 
 @description('Capacity for the text-embedding-3-small deployment (requests/minute)')
 param embeddingCapacity int = 300
@@ -60,17 +60,17 @@ resource cognitiveAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   }
 }
 
-// gpt-4o-mini deployment
-resource gpt4Deployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  name: 'gpt-4o-mini'
+// gpt-5-mini deployment
+resource gpt5Deployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+  name: 'gpt-5-mini'
   parent: cognitiveAccount
   sku: {
     name: 'Standard'
-    capacity: gpt4oMiniCapacity
+    capacity: gpt5MiniCapacity
   }
   properties: {
     model: {
-      name: 'gpt-4o-mini'
+      name: 'gpt-5-mini'
       format: 'OpenAI'
       version: '2024-07-18'
     }
