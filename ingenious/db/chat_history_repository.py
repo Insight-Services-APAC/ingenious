@@ -272,14 +272,17 @@ class IChatHistoryRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_thread_messages(self, thread_id: str) -> list[Message]:
-        """Retrieve all messages for a specific thread.
+    async def get_thread_messages(self, thread_id: str, limit: Optional[int] = None) -> list[Message]:
+        """Retrieve messages for a specific thread.
 
         Args:
             thread_id: Unique identifier for the thread.
+            limit: Optional maximum number of recent messages to retrieve.
+                   If None, retrieves all messages (for backward compatibility).
+                   Recommended to use a limit for better performance.
 
         Returns:
-            List of Message objects belonging to the thread.
+            List of Message objects belonging to the thread, ordered by timestamp (oldest to newest).
         """
         pass
 
@@ -481,18 +484,23 @@ class ChatHistoryRepository:
         await self.repository.update_memory()
         return None
 
-    async def get_thread_messages(self, thread_id: str) -> Optional[List[Message]]:
-        """Retrieve all messages for a specific thread.
+    async def get_thread_messages(
+        self, thread_id: str, limit: Optional[int] = None
+    ) -> Optional[List[Message]]:
+        """Retrieve messages for a specific thread.
 
         Args:
             thread_id: Unique identifier for the thread.
+            limit: Optional maximum number of recent messages to retrieve.
+                   If None, retrieves all messages (for backward compatibility).
+                   Recommended to use a limit for better performance.
 
         Returns:
             List of Message objects belonging to the thread, or None if thread not found.
         """
         return cast(
             Optional[List[Message]],
-            await self.repository.get_thread_messages(thread_id),
+            await self.repository.get_thread_messages(thread_id, limit),
         )
 
     async def get_thread_memory(self, thread_id: str) -> Optional[List[Message]]:

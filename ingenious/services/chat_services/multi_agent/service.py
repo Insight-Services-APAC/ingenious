@@ -91,14 +91,14 @@ class multi_agent_chat_service:
         if not chat_request.thread_id:
             chat_request.thread_id = str(uuid_module.uuid4())
 
-        # Get thread messages & add to messages list
+        # Get thread messages (limit to last 10 for efficiency)
         thread_messages = await self.chat_history_repository.get_thread_messages(
-            chat_request.thread_id
+            chat_request.thread_id, limit=10
         )
         # Build thread memory from messages
         if thread_messages:
             memory_parts = []
-            for msg in thread_messages[-10:]:  # Use last 10 messages
+            for msg in thread_messages:  # Already limited to 10 by database query
                 memory_parts.append(f"{msg.role}: {msg.content[:200]}...")
             chat_request.thread_memory = "\n".join(memory_parts)
         else:

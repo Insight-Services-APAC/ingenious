@@ -248,24 +248,31 @@ class cosmos_ChatHistoryRepository(IChatHistoryRepository):
         except Exception as e:
             raise DatabaseQueryError("Failed to get message from Cosmos", cause=e)
 
-    async def get_thread_messages(self, thread_id: str) -> List[Message]:
-        """Retrieve the last 5 messages from a thread in chronological order.
+    async def get_thread_messages(
+        self, thread_id: str, limit: Optional[int] = None
+    ) -> List[Message]:
+        """Retrieve recent messages from a thread in chronological order.
 
         Args:
             thread_id: Thread identifier to retrieve messages from
+            limit: Maximum number of messages to retrieve. If None, defaults to 5.
+                   For optimal performance, specify the exact number needed.
 
         Returns:
-            List of Message objects in chronological order (up to 5 most recent)
+            List of Message objects in chronological order (up to limit most recent)
 
         Raises:
             DatabaseQueryError: If messages cannot be retrieved from Cosmos DB
         """
         try:
-            # Get last 5 by timestamp desc then reverse to asc
+            # Default to 5 for backward compatibility
+            message_limit = limit if limit is not None else 5
+
+            # Get last N by timestamp desc then reverse to asc
             docs = list(
                 self.chat_history.query_items(
                     query=(
-                        "SELECT TOP 5 c.user_id, c.thread_id, c.message_id, c.positive_feedback, c.timestamp, "
+                        f"SELECT TOP {message_limit} c.user_id, c.thread_id, c.message_id, c.positive_feedback, c.timestamp, "
                         "c.role, c.content, c.content_filter_results, c.tool_calls, c.tool_call_id, c.tool_call_function "
                         "FROM c WHERE c.thread_id = @tid ORDER BY c.timestamp DESC"
                     ),

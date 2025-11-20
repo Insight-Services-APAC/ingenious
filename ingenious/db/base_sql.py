@@ -8,7 +8,7 @@ import json
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Optional
 from uuid import UUID
 
 from ingenious.config import IngeniousSettings
@@ -276,16 +276,24 @@ class BaseSQLRepository(IChatHistoryRepository, ABC):
         else:
             return await self.add_user(identifier)
 
-    async def get_thread_messages(self, thread_id: str) -> list[Message]:
+    async def get_thread_messages(
+        self, thread_id: str, limit: Optional[int] = None
+    ) -> list[Message]:
         """Get recent messages for a thread.
 
         Args:
             thread_id: Thread identifier.
+            limit: Maximum number of recent messages to retrieve.
+                   If None, uses default query builder limit (typically 5).
+                   For optimal performance, specify the exact number needed.
 
         Returns:
-            List of recent messages for the thread, ordered by timestamp.
+            List of recent messages for the thread, ordered by timestamp (oldest to newest).
         """
-        query = self.query_builder.select_thread_messages()
+        if limit is not None:
+            query = self.query_builder.select_thread_messages(limit=limit)
+        else:
+            query = self.query_builder.select_thread_messages()
         params = [thread_id]
 
         result = self._execute_sql(query, params, expect_results=True)
