@@ -49,49 +49,29 @@ async def chat(
         ChatResponse: Chat response with assistant message.
 
     Raises:
-        HTTPException: 400 for validation errors, 406 for content filter,
-            413 for token limit, 500 for other errors.
+        ValidationError: When conversation_flow is not provided.
+        ContentFilterError: When content violates filter policies.
+        TokenLimitExceededError: When token limit is exceeded.
     """
-    try:
-        # Set user_id to "unspecified_user" if not provided
-        if not chat_request.user_id:
-            chat_request.user_id = "unspecified_user"
+    from ingenious.errors import ValidationError
 
-        if not chat_request.conversation_flow:
-            raise ValueError(f"conversation_flow not set {chat_request}")
-        return await chat_service.get_chat_response(chat_request)
-    except ValueError as e:
-        logger.error(
-            "Chat request validation error",
-            conversation_flow=chat_request.conversation_flow,
-            error=str(e),
-            exc_info=True,
+    # Set user_id to "unspecified_user" if not provided
+    if not chat_request.user_id:
+        chat_request.user_id = "unspecified_user"
+
+    # Validate required fields
+    if not chat_request.conversation_flow:
+        raise ValidationError(
+            f"conversation_flow is required but was not provided",
+            context={
+                "conversation_flow": chat_request.conversation_flow,
+                "request_path": "/api/v1/chat",
+            },
+            user_message="conversation_flow is required",
+            recovery_suggestion="Provide a valid conversation_flow in your request",
         )
-        raise HTTPException(status_code=400, detail=str(e))
-    except ContentFilterError as cfe:
-        logger.error(
-            "Content filter error",
-            conversation_flow=chat_request.conversation_flow,
-            error=str(cfe),
-            exc_info=True,
-        )
-        raise HTTPException(status_code=406, detail=ContentFilterError.DEFAULT_MESSAGE)
-    except TokenLimitExceededError as tle:
-        logger.error(
-            "Token limit exceeded",
-            conversation_flow=chat_request.conversation_flow,
-            error=str(tle),
-            exc_info=True,
-        )
-        raise HTTPException(status_code=413, detail=TokenLimitExceededError.DEFAULT_MESSAGE)
-    except Exception as e:
-        logger.error(
-            "Chat request failed",
-            conversation_flow=chat_request.conversation_flow if chat_request else None,
-            error=str(e),
-            exc_info=True,
-        )
-        raise HTTPException(status_code=500, detail=str(e))
+    
+    return await chat_service.get_chat_response(chat_request)
 
 
 @router.post(
@@ -124,13 +104,24 @@ async def chat_stream(
         Yields:
             str: SSE-formatted data events with chat chunks or errors.
         """
+        from ingenious.errors import ValidationError
+
         try:
             # Set user_id to "unspecified_user" if not provided
             if not chat_request.user_id:
                 chat_request.user_id = "unspecified_user"
 
+            # Validate required fields
             if not chat_request.conversation_flow:
-                raise ValueError(f"conversation_flow not set {chat_request}")
+                raise ValidationError(
+                    f"conversation_flow is required but was not provided",
+                    context={
+                        "conversation_flow": chat_request.conversation_flow,
+                        "request_path": "/api/v1/chat/stream",
+                    },
+                    user_message="conversation_flow is required",
+                    recovery_suggestion="Provide a valid conversation_flow in your request",
+                )
 
             # Enable streaming in request
             chat_request.stream = True
@@ -144,25 +135,17 @@ async def chat_stream(
             completion_response = StreamingChatResponse(event="done")
             yield f"data: {completion_response.model_dump_json()}\n\n"
 
-        except ValueError as e:
-            logger.error(
-                "Chat streaming request validation error",
-                conversation_flow=chat_request.conversation_flow,
-                error=str(e),
-                exc_info=True,
-            )
-            error_response = StreamingChatResponse(event="error", error=str(e))
-            yield f"data: {error_response.model_dump_json()}\n\n"
-
         except ContentFilterError as cfe:
             logger.error(
                 "Content filter error in streaming",
                 conversation_flow=chat_request.conversation_flow,
                 error=str(cfe),
+                error_code=cfe.error_code,
+                correlation_id=cfe.context.correlation_id,
                 exc_info=True,
             )
             error_response = StreamingChatResponse(
-                event="error", error=ContentFilterError.DEFAULT_MESSAGE
+                event="error", error=cfe.user_message
             )
             yield f"data: {error_response.model_dump_json()}\n\n"
 
@@ -171,11 +154,25 @@ async def chat_stream(
                 "Token limit exceeded in streaming",
                 conversation_flow=chat_request.conversation_flow,
                 error=str(tle),
+                error_code=tle.error_code,
+                correlation_id=tle.context.correlation_id,
                 exc_info=True,
             )
             error_response = StreamingChatResponse(
-                event="error", error=TokenLimitExceededError.DEFAULT_MESSAGE
+                event="error", error=tle.user_message
             )
+            yield f"data: {error_response.model_dump_json()}\n\n"
+
+        except ValidationError as ve:
+            logger.error(
+                "Chat streaming request validation error",
+                conversation_flow=chat_request.conversation_flow,
+                error=str(ve),
+                error_code=ve.error_code,
+                correlation_id=ve.context.correlation_id,
+                exc_info=True,
+            )
+            error_response = StreamingChatResponse(event="error", error=ve.user_message)
             yield f"data: {error_response.model_dump_json()}\n\n"
 
         except Exception as e:
@@ -185,7 +182,10 @@ async def chat_stream(
                 error=str(e),
                 exc_info=True,
             )
-            error_response = StreamingChatResponse(event="error", error=str(e))
+            error_response = StreamingChatResponse(
+                event="error", 
+                error="An unexpected error occurred. Please try again or contact support."
+            )
             yield f"data: {error_response.model_dump_json()}\n\n"
 
     return StreamingResponse(

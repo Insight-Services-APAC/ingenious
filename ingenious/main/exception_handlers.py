@@ -1,7 +1,8 @@
 """Exception handlers for the FastAPI application.
 
 This module contains exception handlers for proper error responses
-and logging of exceptions across the application.
+and logging of exceptions across the application. Errors are returned
+in RFC 7807 Problem Details format for standardization.
 """
 
 import os
@@ -28,6 +29,9 @@ from ingenious.errors import (
     WorkflowNotFoundError,
     handle_exception,
 )
+from ingenious.errors.content_filter_error import ContentFilterError
+from ingenious.errors.token_limit_exceeded_error import TokenLimitExceededError
+from ingenious.models.problem_details import ProblemDetail
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -40,14 +44,14 @@ class ExceptionHandlers:
 
     @staticmethod
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        """Handle generic exceptions with proper error responses.
+        """Handle generic exceptions with RFC 7807 Problem Details responses.
 
         Args:
             request: FastAPI request object
             exc: Exception that was raised
 
         Returns:
-            JSONResponse with error details and appropriate status code
+            JSONResponse with RFC 7807 Problem Details format and appropriate status code
         """
         if os.environ.get("LOADENV") == "True":
             load_dotenv()
@@ -70,17 +74,22 @@ class ExceptionHandlers:
                 exc_info=True,
             )
 
-            response_content = {
-                "error": {
-                    "code": exc.error_code,
-                    "message": exc.user_message,
-                    "correlation_id": exc.context.correlation_id,
-                    "recoverable": exc.recoverable,
-                    "recovery_suggestion": exc.recovery_suggestion,
-                }
-            }
+            # Create RFC 7807 Problem Details response
+            problem = ProblemDetail(
+                type=f"https://docs.ingenious.dev/errors/{exc.error_code}",
+                title=exc.__class__.__name__,
+                status=status_code,
+                detail=exc.user_message,
+                instance=str(request.url.path),
+                correlation_id=exc.context.correlation_id,
+                recoverable=exc.recoverable,
+                recovery_suggestion=exc.recovery_suggestion,
+            )
 
-            response = JSONResponse(status_code=status_code, content=response_content)
+            response = JSONResponse(
+                status_code=status_code,
+                content=problem.model_dump(exclude_none=True),
+            )
 
             # Add rate limiting headers if applicable
             if hasattr(exc, "retry_after") and exc.retry_after:
@@ -109,30 +118,35 @@ class ExceptionHandlers:
                 exc_info=True,
             )
 
+            # Create RFC 7807 Problem Details response for generic errors
+            problem = ProblemDetail(
+                type="https://docs.ingenious.dev/errors/INTERNAL_ERROR",
+                title="InternalServerError",
+                status=500,
+                detail=ingenious_error.user_message,
+                instance=str(request.url.path),
+                correlation_id=ingenious_error.context.correlation_id,
+                recoverable=ingenious_error.recoverable,
+                recovery_suggestion=ingenious_error.recovery_suggestion,
+            )
+
             return JSONResponse(
                 status_code=500,
-                content={
-                    "error": {
-                        "code": ingenious_error.error_code,
-                        "message": ingenious_error.user_message,
-                        "correlation_id": ingenious_error.context.correlation_id,
-                        "recoverable": ingenious_error.recoverable,
-                    }
-                },
+                content=problem.model_dump(exclude_none=True),
             )
 
     @staticmethod
     async def validation_exception_handler(
         request: Request, exc: FastAPIValidationError
     ) -> JSONResponse:
-        """Handle FastAPI validation errors with structured format.
+        """Handle FastAPI validation errors with RFC 7807 Problem Details format.
 
         Args:
             request: FastAPI request object
             exc: FastAPI validation error that was raised
 
         Returns:
-            JSONResponse with validation error details and 422 status code
+            JSONResponse with RFC 7807 Problem Details format and 422 status code
         """
         # Generate user-friendly error message based on the specific error
         user_message, recovery_suggestion = (
@@ -162,18 +176,21 @@ class ExceptionHandlers:
             correlation_id=validation_error.context.correlation_id,
         )
 
+        # Create RFC 7807 Problem Details response
+        problem = ProblemDetail(
+            type=f"https://docs.ingenious.dev/errors/{validation_error.error_code}",
+            title="RequestValidationError",
+            status=422,
+            detail=validation_error.user_message,
+            instance=str(request.url.path),
+            correlation_id=validation_error.context.correlation_id,
+            recoverable=validation_error.recoverable,
+            recovery_suggestion=validation_error.recovery_suggestion,
+        )
+
         return JSONResponse(
             status_code=422,
-            content={
-                "error": {
-                    "code": validation_error.error_code,
-                    "message": validation_error.user_message,
-                    "correlation_id": validation_error.context.correlation_id,
-                    "details": exc.errors() if hasattr(exc, "errors") else [],
-                    "recoverable": validation_error.recoverable,
-                    "recovery_suggestion": validation_error.recovery_suggestion,
-                }
-            },
+            content=problem.model_dump(exclude_none=True),
         )
 
     @staticmethod
@@ -270,6 +287,12 @@ class ExceptionHandlers:
             return 401
         elif isinstance(error, AuthorizationError):
             return 403
+
+        # Content filter and token limit errors
+        elif isinstance(error, ContentFilterError):
+            return 406  # Not Acceptable for content filter violations
+        elif isinstance(error, TokenLimitExceededError):
+            return 413  # Payload Too Large for token limit exceeded
 
         # Client errors (4xx)
         elif isinstance(error, RequestValidationError):
