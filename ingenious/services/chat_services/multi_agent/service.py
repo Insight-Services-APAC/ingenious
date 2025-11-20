@@ -23,7 +23,7 @@ from ingenious.utils.namespace_utils import normalize_workflow_name
 logger = get_logger(__name__)
 
 
-class multi_agent_chat_service:
+class MultiAgentChatService:
     """Multi-agent chat service implementation using AutoGen framework.
 
     This service orchestrates conversations using multiple AI agents through
@@ -498,7 +498,7 @@ class IConversationPattern(ABC):
         """
         super().__init__()
         self._config = ig_config.get_config()
-        self._memory_path = self.GetConfig().chat_history.memory_path
+        self._memory_path = self.get_config().chat_history.memory_path
         self._memory_file_path = f"{self._memory_path}/context.md"
 
         # Initialize memory manager for cloud storage support
@@ -506,7 +506,7 @@ class IConversationPattern(ABC):
 
         self._memory_manager = get_memory_manager(self._config, self._memory_path)
 
-    def GetConfig(self) -> "IngeniousSettings":
+    def get_config(self) -> "IngeniousSettings":
         """Get the current configuration settings.
 
         Returns:
@@ -514,7 +514,25 @@ class IConversationPattern(ABC):
         """
         return self._config
 
-    def Get_Models(self) -> Dict[str, Any]:
+    def GetConfig(self) -> "IngeniousSettings":
+        """Get the current configuration settings.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_config` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            IngeniousSettings: The current configuration instance.
+        """
+        import warnings
+
+        warnings.warn(
+            "GetConfig is deprecated, use get_config instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_config()
+
+    def get_models(self) -> Dict[str, Any]:
         """Get the configured language models as a dictionary.
 
         Returns:
@@ -522,7 +540,25 @@ class IConversationPattern(ABC):
         """
         return self._config.models.__dict__
 
-    def Get_Memory_Path(self) -> str:
+    def Get_Models(self) -> Dict[str, Any]:
+        """Get the configured language models as a dictionary.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_models` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing model configurations.
+        """
+        import warnings
+
+        warnings.warn(
+            "Get_Models is deprecated, use get_models instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_models()
+
+    def get_memory_path(self) -> str:
         """Get the path to the memory storage directory.
 
         Returns:
@@ -530,7 +566,25 @@ class IConversationPattern(ABC):
         """
         return self._memory_path
 
-    def Get_Memory_File(self) -> str:
+    def Get_Memory_Path(self) -> str:
+        """Get the path to the memory storage directory.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_memory_path` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            str: The memory storage directory path.
+        """
+        import warnings
+
+        warnings.warn(
+            "Get_Memory_Path is deprecated, use get_memory_path instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_memory_path()
+
+    def get_memory_file(self) -> str:
         """Get the full path to the memory context file.
 
         Returns:
@@ -538,13 +592,61 @@ class IConversationPattern(ABC):
         """
         return self._memory_file_path
 
-    def Maintain_Memory(self, new_content: str, max_words: int = 150) -> Any:
-        """Maintain memory using the MemoryManager for cloud storage support."""
+    def Get_Memory_File(self) -> str:
+        """Get the full path to the memory context file.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_memory_file` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            str: The full path to the memory file (context.md).
+        """
+        import warnings
+
+        warnings.warn(
+            "Get_Memory_File is deprecated, use get_memory_file instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_memory_file()
+
+    def maintain_memory(self, new_content: str, max_words: int = 150) -> Any:
+        """Maintain memory using the MemoryManager for cloud storage support.
+
+        Args:
+            new_content: New content to add to memory.
+            max_words: Maximum number of words to keep in memory.
+
+        Returns:
+            Memory operation result.
+        """
         from ingenious.services.memory_manager import run_async_memory_operation
 
         return run_async_memory_operation(  # type: ignore
             self._memory_manager.maintain_memory(new_content, max_words)
         )
+
+    def Maintain_Memory(self, new_content: str, max_words: int = 150) -> Any:
+        """Maintain memory using the MemoryManager for cloud storage support.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`maintain_memory` instead. This method will be removed in v0.3.0.
+
+        Args:
+            new_content: New content to add to memory.
+            max_words: Maximum number of words to keep in memory.
+
+        Returns:
+            Memory operation result.
+        """
+        import warnings
+
+        warnings.warn(
+            "Maintain_Memory is deprecated, use maintain_memory instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.maintain_memory(new_content, max_words)
 
     async def write_llm_responses_to_file(
         self, response_array: List[Dict[str, Any]], event_type: str, output_path: str
@@ -596,10 +698,10 @@ class IConversationFlow(ABC):
     _memory_path: str
     _memory_file_path: str
     _logger: logging.Logger
-    _chat_service: multi_agent_chat_service
+    _chat_service: MultiAgentChatService
     _memory_manager: Any
 
-    def __init__(self, parent_multi_agent_chat_service: multi_agent_chat_service) -> None:
+    def __init__(self, parent_multi_agent_chat_service: MultiAgentChatService) -> None:
         """Initialize the conversation flow with parent service context.
 
         Args:
@@ -609,7 +711,7 @@ class IConversationFlow(ABC):
         super().__init__()
         # Use configuration from parent service instead of loading separately
         self._config = parent_multi_agent_chat_service.config
-        self._memory_path = self.GetConfig().chat_history.memory_path
+        self._memory_path = self.get_config().chat_history.memory_path
         self._memory_file_path = f"{self._memory_path}/context.md"
         self._logger = get_logger(__name__)  # type: ignore
         self._chat_service = parent_multi_agent_chat_service
@@ -619,7 +721,7 @@ class IConversationFlow(ABC):
 
         self._memory_manager = get_memory_manager(self._config, self._memory_path)
 
-    def GetConfig(self) -> "IngeniousSettings":
+    def get_config(self) -> "IngeniousSettings":
         """Get the current configuration settings.
 
         Returns:
@@ -627,7 +729,25 @@ class IConversationFlow(ABC):
         """
         return self._config
 
-    async def Get_Template(
+    def GetConfig(self) -> "IngeniousSettings":
+        """Get the current configuration settings.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_config` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            IngeniousSettings: The current configuration instance.
+        """
+        import warnings
+
+        warnings.warn(
+            "GetConfig is deprecated, use get_config instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_config()
+
+    async def get_template(
         self, revision_id: Optional[str] = None, file_name: str = "user_prompt.md"
     ) -> str:
         """Retrieve and render a Jinja2 template from the prompt template storage.
@@ -654,7 +774,31 @@ class IConversationFlow(ABC):
         template = env.from_string(content)
         return template.render()  # type: ignore
 
-    def Get_Models(self) -> Any:
+    async def Get_Template(
+        self, revision_id: Optional[str] = None, file_name: str = "user_prompt.md"
+    ) -> str:
+        """Retrieve and render a Jinja2 template from the prompt template storage.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_template` instead. This method will be removed in v0.3.0.
+
+        Args:
+            revision_id: Optional revision identifier to load a specific template version.
+            file_name: The name of the template file to load (default: "user_prompt.md").
+
+        Returns:
+            str: The rendered template content, or empty string if template not found.
+        """
+        import warnings
+
+        warnings.warn(
+            "Get_Template is deprecated, use get_template instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return await self.get_template(revision_id, file_name)
+
+    def get_models(self) -> Any:
         """Get the configured language models.
 
         Returns:
@@ -662,7 +806,25 @@ class IConversationFlow(ABC):
         """
         return self._config.models
 
-    def Get_Memory_Path(self) -> str:
+    def Get_Models(self) -> Any:
+        """Get the configured language models.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_models` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            Any: The models configuration object.
+        """
+        import warnings
+
+        warnings.warn(
+            "Get_Models is deprecated, use get_models instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_models()
+
+    def get_memory_path(self) -> str:
         """Get the path to the memory storage directory.
 
         Returns:
@@ -670,7 +832,25 @@ class IConversationFlow(ABC):
         """
         return self._memory_path
 
-    def Get_Memory_File(self) -> str:
+    def Get_Memory_Path(self) -> str:
+        """Get the path to the memory storage directory.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_memory_path` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            str: The memory storage directory path.
+        """
+        import warnings
+
+        warnings.warn(
+            "Get_Memory_Path is deprecated, use get_memory_path instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_memory_path()
+
+    def get_memory_file(self) -> str:
         """Get the full path to the memory context file.
 
         Returns:
@@ -678,13 +858,61 @@ class IConversationFlow(ABC):
         """
         return self._memory_file_path
 
-    def Maintain_Memory(self, new_content: str, max_words: int = 150) -> Any:
-        """Maintain memory using the MemoryManager for cloud storage support."""
+    def Get_Memory_File(self) -> str:
+        """Get the full path to the memory context file.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`get_memory_file` instead. This method will be removed in v0.3.0.
+
+        Returns:
+            str: The full path to the memory file (context.md).
+        """
+        import warnings
+
+        warnings.warn(
+            "Get_Memory_File is deprecated, use get_memory_file instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_memory_file()
+
+    def maintain_memory(self, new_content: str, max_words: int = 150) -> Any:
+        """Maintain memory using the MemoryManager for cloud storage support.
+
+        Args:
+            new_content: New content to add to memory.
+            max_words: Maximum number of words to keep in memory.
+
+        Returns:
+            Memory operation result.
+        """
         from ingenious.services.memory_manager import run_async_memory_operation
 
         return run_async_memory_operation(  # type: ignore
             self._memory_manager.maintain_memory(new_content, max_words)
         )
+
+    def Maintain_Memory(self, new_content: str, max_words: int = 150) -> Any:
+        """Maintain memory using the MemoryManager for cloud storage support.
+
+        .. deprecated:: 0.2.8
+            Use :meth:`maintain_memory` instead. This method will be removed in v0.3.0.
+
+        Args:
+            new_content: New content to add to memory.
+            max_words: Maximum number of words to keep in memory.
+
+        Returns:
+            Memory operation result.
+        """
+        import warnings
+
+        warnings.warn(
+            "Maintain_Memory is deprecated, use maintain_memory instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.maintain_memory(new_content, max_words)
 
     @abstractmethod
     async def get_conversation_response(self, chat_request: IChatRequest) -> IChatResponse:
@@ -748,6 +976,10 @@ class IConversationFlow(ABC):
             is_final=True,
         )
         pass
+
+
+# Backward compatibility alias - will be removed in v0.3.0
+multi_agent_chat_service = MultiAgentChatService
 
 
 # Save agent response
