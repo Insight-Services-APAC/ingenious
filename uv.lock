@@ -7,12 +7,6 @@ resolution-markers = [
     "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')",
 ]
 
-[manifest]
-members = [
-    "ingenious",
-    "test-dir",
-]
-
 [[package]]
 name = "accelerate"
 version = "1.10.1"
@@ -4957,17 +4951,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/0a/d4/2b0cd0fe285e14b36
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/30/643397144bfbfec6f6ef821f36f33e57d35946c44a2352d3c9f0ae847619/tenacity-9.1.2-py3-none-any.whl", hash = "sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138", size = 28248, upload-time = "2025-04-02T08:25:07.678Z" },
 ]
-
-[[package]]
-name = "test-dir"
-version = "0.1.0"
-source = { virtual = "test_dir" }
-dependencies = [
-    { name = "ingenious", extra = ["azure-full"] },
-]
-
-[package.metadata]
-requires-dist = [{ name = "ingenious", extras = ["azure-full"], editable = "." }]
 
 [[package]]
 name = "threadpoolctl"
