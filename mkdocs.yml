@@ -89,6 +89,17 @@ nav:
       - Azure Authentication: guides/azure-authentication.md
   - Developer Guides:
       - Authentication: auth.md
+  - Architecture Decision Records:
+      - adr/README.md
+      - ADR Template: adr/template.md
+      - ADR-001 Dynamic Imports: adr/001-dynamic-imports.md
+      - ADR-002 Database Backends: adr/002-database-backends.md
+      - ADR-003 Middleware Ordering: adr/003-middleware-ordering.md
+      - ADR-004 Dependency Groups: adr/004-dependency-groups.md
+      - ADR-005 Conversation Flow Plugins: adr/005-conversation-flow-plugins.md
+      - ADR-006 ConfigWrapper: adr/006-config-wrapper.md
+      - ADR-007 Dependency Injection: adr/007-dependency-injection.md
+      - ADR-008 Error Hierarchy: adr/008-error-hierarchy.md
 exclude_docs: |
   data/*
 extra_javascript:

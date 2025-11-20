@@ -298,6 +298,22 @@ Learn how to:
 
 For detailed documentation, see the [docs](https://insight-services-apac.github.io/ingenious/).
 
+### Architecture Decision Records (ADRs)
+
+Learn about the key architectural decisions and design choices:
+
+- [**ADR Index**](docs/adr/README.md) - Complete list of all architectural decisions
+- [**ADR-001: Dynamic Import Pattern**](docs/adr/001-dynamic-imports.md) - Plugin architecture with namespace fallback
+- [**ADR-002: Three Database Backend Strategy**](docs/adr/002-database-backends.md) - SQLite, Azure SQL, and Cosmos DB support
+- [**ADR-003: Middleware Ordering**](docs/adr/003-middleware-ordering.md) - RequestContext → CORS → Auth stack
+- [**ADR-004: Optional Dependency Groups**](docs/adr/004-dependency-groups.md) - Modular installation options
+- [**ADR-005: Conversation Flow Plugin Architecture**](docs/adr/005-conversation-flow-plugins.md) - Extensible workflow system
+- [**ADR-006: ConfigWrapper Service Injection**](docs/adr/006-config-wrapper.md) - Proxy pattern for dependency bundling
+- [**ADR-007: FastAPI Dependency Injection**](docs/adr/007-dependency-injection.md) - Native FastAPI DI patterns
+- [**ADR-008: Error Hierarchy Design**](docs/adr/008-error-hierarchy.md) - Structured error handling system
+
+These ADRs document the rationale behind architectural decisions, tradeoffs considered, and alternatives that were evaluated.
+
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](https://github.com/Insight-Services-APAC/ingenious/blob/main/CONTRIBUTING.md) for guidelines.
