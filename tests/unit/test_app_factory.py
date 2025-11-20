@@ -314,3 +314,21 @@ class TestCORSConfiguration:
         assert web_settings.cors_allow_credentials is True
         assert web_settings.cors_allow_methods == ["*"]
         assert web_settings.cors_allow_headers == ["*"]
+
+    def test_cors_comma_separated_parsing(self):
+        """Test that comma-separated CORS origins are parsed correctly."""
+        from ingenious.config.models import WebSettings
+
+        # Test parsing comma-separated string
+        web_settings = WebSettings(
+            cors_allowed_origins="https://app.example.com, https://admin.example.com"
+        )
+
+        assert web_settings.cors_allowed_origins == [
+            "https://app.example.com",
+            "https://admin.example.com",
+        ]
+
+        # Test parsing with trailing commas and spaces
+        web_settings2 = WebSettings(cors_allowed_origins="http://localhost:3000,  ,http://localhost:8080, ")
+        assert web_settings2.cors_allowed_origins == ["http://localhost:3000", "http://localhost:8080"]

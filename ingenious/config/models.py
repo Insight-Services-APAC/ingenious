@@ -274,6 +274,14 @@ class WebSettings(BaseModel):
         default=["*"], description="Allowed HTTP headers for CORS"
     )
 
+    @field_validator("cors_allowed_origins", "cors_allow_methods", "cors_allow_headers", mode="before")
+    @classmethod
+    def parse_comma_separated_list(cls, v):
+        """Parse comma-separated string into list."""
+        if isinstance(v, str):
+            return [item.strip() for item in v.split(",") if item.strip()]
+        return v
+
     @field_validator("port")
     @classmethod
     def validate_port(cls, v: int) -> int:
