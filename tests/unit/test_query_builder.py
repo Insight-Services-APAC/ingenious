@@ -388,3 +388,118 @@ class TestDataTypeMapping:
         # SQLite should use TEXT, Azure SQL should use NVARCHAR
         assert "identifier TEXT" in sqlite_query
         assert "identifier NVARCHAR(255)" in azuresql_query
+
+
+class TestIndexCreation:
+    """Test index creation functionality for both dialects."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.sqlite_builder = QueryBuilder(SQLiteDialect())
+        self.azuresql_builder = QueryBuilder(AzureSQLDialect())
+
+    def test_sqlite_create_chat_history_indexes(self):
+        """Test chat_history index creation with SQLite syntax."""
+        indexes = self.sqlite_builder.create_chat_history_indexes()
+        assert len(indexes) == 1
+        assert "CREATE INDEX IF NOT EXISTS idx_chat_history_thread_time" in indexes[0]
+        assert "ON chat_history(thread_id, timestamp)" in indexes[0]
+
+    def test_azuresql_create_chat_history_indexes(self):
+        """Test chat_history index creation with Azure SQL syntax."""
+        indexes = self.azuresql_builder.create_chat_history_indexes()
+        assert len(indexes) == 1
+        assert "IF NOT EXISTS" in indexes[0]
+        assert "idx_chat_history_thread_time" in indexes[0]
+        assert "chat_history" in indexes[0]
+        assert "[thread_id]" in indexes[0]
+        assert "[timestamp]" in indexes[0]
+
+    def test_sqlite_create_threads_indexes(self):
+        """Test threads index creation with SQLite syntax."""
+        indexes = self.sqlite_builder.create_threads_indexes()
+        assert len(indexes) == 1
+        assert "CREATE INDEX IF NOT EXISTS idx_threads_user_created" in indexes[0]
+        assert "ON threads(userIdentifier, createdAt)" in indexes[0]
+
+    def test_azuresql_create_threads_indexes(self):
+        """Test threads index creation with Azure SQL syntax."""
+        indexes = self.azuresql_builder.create_threads_indexes()
+        assert len(indexes) == 1
+        assert "idx_threads_user_created" in indexes[0]
+        assert "threads" in indexes[0]
+        assert "[userIdentifier]" in indexes[0]
+        assert "[createdAt]" in indexes[0]
+
+    def test_sqlite_create_steps_indexes(self):
+        """Test steps index creation with SQLite syntax."""
+        indexes = self.sqlite_builder.create_steps_indexes()
+        assert len(indexes) == 1
+        assert "CREATE INDEX IF NOT EXISTS idx_steps_thread_created" in indexes[0]
+        assert "ON steps(threadId, createdAt)" in indexes[0]
+
+    def test_azuresql_create_steps_indexes(self):
+        """Test steps index creation with Azure SQL syntax."""
+        indexes = self.azuresql_builder.create_steps_indexes()
+        assert len(indexes) == 1
+        assert "idx_steps_thread_created" in indexes[0]
+        assert "steps" in indexes[0]
+        assert "[threadId]" in indexes[0]
+        assert "[createdAt]" in indexes[0]
+
+    def test_sqlite_create_feedbacks_indexes(self):
+        """Test feedbacks index creation with SQLite syntax."""
+        indexes = self.sqlite_builder.create_feedbacks_indexes()
+        assert len(indexes) == 1
+        assert "CREATE INDEX IF NOT EXISTS idx_feedbacks_forid" in indexes[0]
+        assert "ON feedbacks(forId)" in indexes[0]
+
+    def test_azuresql_create_feedbacks_indexes(self):
+        """Test feedbacks index creation with Azure SQL syntax."""
+        indexes = self.azuresql_builder.create_feedbacks_indexes()
+        assert len(indexes) == 1
+        assert "idx_feedbacks_forid" in indexes[0]
+        assert "feedbacks" in indexes[0]
+        assert "[forId]" in indexes[0]
+
+    def test_sqlite_create_elements_indexes(self):
+        """Test elements index creation with SQLite syntax."""
+        indexes = self.sqlite_builder.create_elements_indexes()
+        assert len(indexes) == 1
+        assert "CREATE INDEX IF NOT EXISTS idx_elements_thread" in indexes[0]
+        assert "ON elements(threadId)" in indexes[0]
+
+    def test_azuresql_create_elements_indexes(self):
+        """Test elements index creation with Azure SQL syntax."""
+        indexes = self.azuresql_builder.create_elements_indexes()
+        assert len(indexes) == 1
+        assert "idx_elements_thread" in indexes[0]
+        assert "elements" in indexes[0]
+        assert "[threadId]" in indexes[0]
+
+    def test_all_index_methods_return_list(self):
+        """Ensure all index creation methods return lists."""
+        sqlite_methods = [
+            self.sqlite_builder.create_chat_history_indexes,
+            self.sqlite_builder.create_threads_indexes,
+            self.sqlite_builder.create_steps_indexes,
+            self.sqlite_builder.create_feedbacks_indexes,
+            self.sqlite_builder.create_elements_indexes,
+        ]
+
+        for method in sqlite_methods:
+            result = method()
+            assert isinstance(result, list), f"{method.__name__} should return a list"
+            assert len(result) > 0, f"{method.__name__} should return non-empty list"
+
+    def test_index_creation_idempotent(self):
+        """Test that index creation queries are idempotent (IF NOT EXISTS)."""
+        # SQLite
+        sqlite_indexes = self.sqlite_builder.create_chat_history_indexes()
+        for index in sqlite_indexes:
+            assert "IF NOT EXISTS" in index, "SQLite indexes should be idempotent"
+
+        # Azure SQL
+        azuresql_indexes = self.azuresql_builder.create_chat_history_indexes()
+        for index in azuresql_indexes:
+            assert "IF NOT EXISTS" in index, "Azure SQL indexes should be idempotent"

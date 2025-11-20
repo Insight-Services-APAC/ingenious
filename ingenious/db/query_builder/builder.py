@@ -358,6 +358,66 @@ class QueryBuilder:
             WHERE user_id = ?
         """
 
+    def create_chat_history_indexes(self) -> list[str]:
+        """Generate CREATE INDEX queries for chat_history table.
+
+        Returns:
+            List of database-specific SQL statements to create indexes on chat_history table.
+        """
+        return [
+            self.dialect.get_create_index_if_not_exists_syntax(
+                "idx_chat_history_thread_time", "chat_history", ["thread_id", "timestamp"]
+            )
+        ]
+
+    def create_threads_indexes(self) -> list[str]:
+        """Generate CREATE INDEX queries for threads table.
+
+        Returns:
+            List of database-specific SQL statements to create indexes on threads table.
+        """
+        return [
+            self.dialect.get_create_index_if_not_exists_syntax(
+                "idx_threads_user_created", "threads", ["userIdentifier", "createdAt"]
+            )
+        ]
+
+    def create_steps_indexes(self) -> list[str]:
+        """Generate CREATE INDEX queries for steps table.
+
+        Returns:
+            List of database-specific SQL statements to create indexes on steps table.
+        """
+        return [
+            self.dialect.get_create_index_if_not_exists_syntax(
+                "idx_steps_thread_created", "steps", ["threadId", "createdAt"]
+            )
+        ]
+
+    def create_feedbacks_indexes(self) -> list[str]:
+        """Generate CREATE INDEX queries for feedbacks table.
+
+        Returns:
+            List of database-specific SQL statements to create indexes on feedbacks table.
+        """
+        return [
+            self.dialect.get_create_index_if_not_exists_syntax(
+                "idx_feedbacks_forid", "feedbacks", ["forId"]
+            )
+        ]
+
+    def create_elements_indexes(self) -> list[str]:
+        """Generate CREATE INDEX queries for elements table.
+
+        Returns:
+            List of database-specific SQL statements to create indexes on elements table.
+        """
+        return [
+            self.dialect.get_create_index_if_not_exists_syntax(
+                "idx_elements_thread", "elements", ["threadId"]
+            )
+        ]
+
     def get_query(self, query_type: str, **kwargs: Any) -> str:
         """Get a query by type name with optional parameters.
 

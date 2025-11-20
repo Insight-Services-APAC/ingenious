@@ -61,10 +61,11 @@ class BaseSQLRepository(IChatHistoryRepository, ABC):
         pass
 
     def _create_tables(self) -> None:
-        """Create all required database tables.
+        """Create all required database tables and indexes.
 
         Uses QueryBuilder to generate database-specific CREATE TABLE statements
-        for chat_history, chat_history_summary, and users.
+        for chat_history, chat_history_summary, and users, and CREATE INDEX
+        statements for optimizing common queries.
         """
         table_queries = [
             self.query_builder.create_chat_history_table(),
@@ -73,6 +74,18 @@ class BaseSQLRepository(IChatHistoryRepository, ABC):
         ]
 
         for query in table_queries:
+            self._execute_sql(query, expect_results=False)
+
+        # Create indexes for performance optimization
+        index_queries = (
+            self.query_builder.create_chat_history_indexes()
+            + self.query_builder.create_threads_indexes()
+            + self.query_builder.create_steps_indexes()
+            + self.query_builder.create_feedbacks_indexes()
+            + self.query_builder.create_elements_indexes()
+        )
+
+        for query in index_queries:
             self._execute_sql(query, expect_results=False)
 
     async def add_message(self, message: Message) -> str:

@@ -100,3 +100,20 @@ class SQLiteDialect(Dialect):
             "json": "JSONB",
             "array": "TEXT[]",
         }
+
+    def get_create_index_if_not_exists_syntax(
+        self, index_name: str, table_name: str, columns: List[str]
+    ) -> str:
+        """Generate SQLite CREATE INDEX IF NOT EXISTS syntax.
+
+        Args:
+            index_name: Name for the index.
+            table_name: Table to create the index on.
+            columns: List of column names to include in the index.
+
+        Returns:
+            SQLite CREATE INDEX IF NOT EXISTS SQL.
+        """
+        columns_str = ", ".join(columns)
+        # nosec B608: index_name, table_name, and columns are validated by caller
+        return f"CREATE INDEX IF NOT EXISTS {index_name} ON {table_name}({columns_str})"
