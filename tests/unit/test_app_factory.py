@@ -30,7 +30,6 @@ class TestFastAgentAPI:
         import ingenious.main.app_factory as app_factory
 
         # Test that all required imports are accessible
-        assert hasattr(app_factory, "os")
         assert hasattr(app_factory, "TYPE_CHECKING")
         assert hasattr(app_factory, "FastAPI")
         assert hasattr(app_factory, "CORSMiddleware")
@@ -39,12 +38,10 @@ class TestFastAgentAPI:
         assert hasattr(app_factory, "RequestContextMiddleware")
         assert hasattr(app_factory, "RouteManager")
 
-    @patch.dict(os.environ, {"INGENIOUS_WORKING_DIR": "/test/dir"})
-    @patch("os.chdir")
     @patch("ingenious.main.app_factory.RouteManager")
     @patch("ingenious.main.app_factory.ExceptionHandlers")
     def test_init_creates_and_configures_app(
-        self, mock_exception_handlers, mock_route_manager, mock_chdir
+        self, mock_exception_handlers, mock_route_manager
     ):
         """Test that __init__ creates and configures the app."""
         api = FastAgentAPI(self.mock_config)
@@ -54,7 +51,6 @@ class TestFastAgentAPI:
         assert api.config is self.mock_config
 
         # Verify configuration methods were called
-        mock_chdir.assert_called_once_with("/test/dir")
         mock_route_manager.register_all_routes.assert_called_once_with(api.app, self.mock_config)
         mock_exception_handlers.register_handlers.assert_called_once_with(api.app)
 
@@ -77,16 +73,25 @@ class TestFastAgentAPI:
         # Should not raise any exceptions
         api._setup_dependency_injection()
 
-    @patch.dict(os.environ, {"INGENIOUS_WORKING_DIR": "/custom/path"})
-    @patch("os.chdir")
-    def test_setup_working_directory(self, mock_chdir):
-        """Test that _setup_working_directory changes to correct directory."""
+    def test_no_working_directory_change(self):
+        """Test that the app factory no longer changes working directory."""
+        import os
+        original_cwd = os.getcwd()
+        
+        # Create API instance
         api = FastAgentAPI.__new__(FastAgentAPI)
         api.config = self.mock_config
-
-        api._setup_working_directory()
-
-        mock_chdir.assert_called_once_with("/custom/path")
+        api.app = Mock()
+        
+        # Configure app
+        with (
+            patch("ingenious.main.app_factory.RouteManager"),
+            patch("ingenious.main.app_factory.ExceptionHandlers"),
+        ):
+            api._configure_app()
+        
+        # Verify working directory hasn't changed
+        assert os.getcwd() == original_cwd
 
     def test_setup_middleware_configures_cors_and_context(self):
         """Test that _setup_middleware configures middleware correctly."""
@@ -176,12 +181,10 @@ class TestFastAgentAPI:
         # RedirectResponse stores URL in different attribute
         assert "/docs" in str(result) or hasattr(result, "headers")
 
-    @patch.dict(os.environ, {"INGENIOUS_WORKING_DIR": "/test"})
-    @patch("os.chdir")
     @patch("ingenious.main.app_factory.RouteManager")
     @patch("ingenious.main.app_factory.ExceptionHandlers")
     def test_configure_app_calls_all_setup_methods(
-        self, mock_exception_handlers, mock_route_manager, mock_chdir
+        self, mock_exception_handlers, mock_route_manager
     ):
         """Test that _configure_app calls all setup methods in correct order."""
         api = FastAgentAPI.__new__(FastAgentAPI)
@@ -191,7 +194,6 @@ class TestFastAgentAPI:
         # Mock all the setup methods to track call order
         with (
             patch.object(api, "_setup_dependency_injection") as mock_di,
-            patch.object(api, "_setup_working_directory") as mock_wd,
             patch.object(api, "_setup_middleware") as mock_mw,
             patch.object(api, "_setup_routes") as mock_routes,
             patch.object(api, "_setup_exception_handlers") as mock_eh,
@@ -202,7 +204,6 @@ class TestFastAgentAPI:
 
             # Verify all methods were called
             mock_di.assert_called_once()
-            mock_wd.assert_called_once()
             mock_mw.assert_called_once()
             mock_routes.assert_called_once()
             mock_eh.assert_called_once()
@@ -213,12 +214,10 @@ class TestFastAgentAPI:
 class TestCreateApp:
     """Test cases for create_app factory function."""
 
-    @patch.dict(os.environ, {"INGENIOUS_WORKING_DIR": "/test"})
-    @patch("os.chdir")
     @patch("ingenious.main.app_factory.RouteManager")
     @patch("ingenious.main.app_factory.ExceptionHandlers")
     def test_create_app_returns_configured_fastapi_app(
-        self, mock_exception_handlers, mock_route_manager, mock_chdir
+        self, mock_exception_handlers, mock_route_manager
     ):
         """Test that create_app returns a properly configured FastAPI instance."""
         mock_config = Mock()
@@ -231,7 +230,6 @@ class TestCreateApp:
         assert app.version == "1.0.0"
 
         # Verify configuration was applied
-        mock_chdir.assert_called_once_with("/test")
         mock_route_manager.register_all_routes.assert_called_once()
         mock_exception_handlers.register_handlers.assert_called_once()
 
@@ -242,12 +240,10 @@ class TestCreateApp:
         assert "Args:" in create_app.__doc__
         assert "Returns:" in create_app.__doc__
 
-    @patch.dict(os.environ, {"INGENIOUS_WORKING_DIR": "/test"})
-    @patch("os.chdir")
     @patch("ingenious.main.app_factory.RouteManager")
     @patch("ingenious.main.app_factory.ExceptionHandlers")
     def test_create_app_creates_new_fast_agent_api_instance(
-        self, mock_exception_handlers, mock_route_manager, mock_chdir
+        self, mock_exception_handlers, mock_route_manager
     ):
         """Test that create_app creates a new FastAgentAPI instance."""
         mock_config = Mock()
@@ -264,3 +260,32 @@ class TestCreateApp:
 
             # Verify the app was returned
             assert result is mock_api_instance.app
+
+    @patch("ingenious.main.app_factory.RouteManager")
+    @patch("ingenious.main.app_factory.ExceptionHandlers")
+    def test_multiple_app_instances_dont_interfere(
+        self, mock_exception_handlers, mock_route_manager
+    ):
+        """Test that multiple app instances can be created without interfering with each other."""
+        from pathlib import Path
+        
+        # Save original working directory
+        original_cwd = Path.cwd()
+        
+        # Create two configs with different working directories
+        mock_config1 = Mock()
+        mock_config1.working_dir = Path("/tmp/app1")
+        
+        mock_config2 = Mock()
+        mock_config2.working_dir = Path("/tmp/app2")
+        
+        # Create two app instances
+        app1 = create_app(mock_config1)
+        app2 = create_app(mock_config2)
+        
+        # Verify both apps were created
+        assert isinstance(app1, FastAPI)
+        assert isinstance(app2, FastAPI)
+        
+        # Verify the working directory hasn't changed
+        assert Path.cwd() == original_cwd

@@ -4,7 +4,6 @@ This module contains the factory function for creating and configuring
 the FastAPI application with all necessary middleware, routes, and services.
 """
 
-import os
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
@@ -48,7 +47,6 @@ class FastAgentAPI:
     def _configure_app(self) -> None:
         """Configure the FastAPI application with middleware, routes, and services."""
         self._setup_dependency_injection()
-        self._setup_working_directory()
         self._setup_middleware()
         self._setup_routes()
         self._setup_exception_handlers()
@@ -59,10 +57,6 @@ class FastAgentAPI:
         """Initialize dependency injection - no longer needed with FastAPI DI."""
         # FastAPI handles dependency injection natively
         pass
-
-    def _setup_working_directory(self) -> None:
-        """Set the working directory from environment variable."""
-        os.chdir(os.environ["INGENIOUS_WORKING_DIR"])
 
     def _setup_middleware(self) -> None:
         """Configure middleware stack including CORS and authentication."""

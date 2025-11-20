@@ -5,6 +5,8 @@ all configuration models and provides the main configuration interface.
 """
 
 import json
+import os
+from pathlib import Path
 from typing import Any, List, Optional
 
 from pydantic import Field, field_validator
@@ -47,6 +49,11 @@ class IngeniousSettings(BaseSettings):
     """
 
     model_config = get_settings_config()
+
+    working_dir: Path = Field(
+        default_factory=lambda: Path(os.environ.get("INGENIOUS_WORKING_DIR", os.getcwd())),
+        description="Working directory for the application. All relative paths are resolved against this directory.",
+    )
 
     profile: str = Field(
         "default", description="Profile name to use for environment-specific settings"
@@ -222,6 +229,33 @@ class IngeniousSettings(BaseSettings):
             if self.chat_history.database_type == "cosmos":
                 # When using legacy env vars, default to sqlite for simplicity
                 self.chat_history.database_type = "sqlite"
+
+        # Resolve relative paths to absolute paths based on working_dir
+        self._resolve_paths()
+
+    def _resolve_paths(self) -> None:
+        """Resolve all relative paths to absolute paths based on working_dir."""
+        # Resolve chat_history paths
+        if not Path(self.chat_history.database_path).is_absolute():
+            self.chat_history.database_path = str(
+                self.working_dir / self.chat_history.database_path
+            )
+        if not Path(self.chat_history.memory_path).is_absolute():
+            self.chat_history.memory_path = str(self.working_dir / self.chat_history.memory_path)
+
+        # Resolve local_sql_db paths
+        if not Path(self.local_sql_db.database_path).is_absolute():
+            self.local_sql_db.database_path = str(
+                self.working_dir / self.local_sql_db.database_path
+            )
+
+        # Resolve file_storage paths
+        if not Path(self.file_storage.revisions.path).is_absolute():
+            self.file_storage.revisions.path = str(
+                self.working_dir / self.file_storage.revisions.path
+            )
+        if not Path(self.file_storage.data.path).is_absolute():
+            self.file_storage.data.path = str(self.working_dir / self.file_storage.data.path)
 
     def validate_configuration(self) -> None:
         """Validate the complete configuration and provide helpful feedback."""

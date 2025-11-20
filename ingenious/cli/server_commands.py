@@ -258,7 +258,6 @@ def register_commands(app: typer.Typer, console: Console) -> None:
                 logger.warning("Failed to import namespace", namespace=namespace, error=str(e))
 
         os.environ["INGENIOUS_WORKING_DIR"] = str(Path(os.getcwd()))
-        os.chdir(str(Path(os.getcwd())))
         log_namespace_modules("ingenious.services.chat_services.multi_agent.conversation_flows")
 
         app = make_app(config)
