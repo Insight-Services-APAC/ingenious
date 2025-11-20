@@ -13,6 +13,7 @@ from ingenious.db.chat_history_repository import ChatHistoryRepository
 from ingenious.external_services.openai_service import OpenAIService
 from ingenious.files.files_repository import FileStorage
 from ingenious.models.database_client import DatabaseClientType
+from ingenious.services.cache import CacheService, create_cache_service
 from ingenious.services.chat_service import ChatService
 from ingenious.services.message_feedback_service import MessageFeedbackService
 
@@ -24,6 +25,31 @@ logger = get_logger(__name__)
 def get_config() -> IngeniousSettings:
     """Get the application configuration."""
     return _get_config()
+
+
+# Cache service singleton
+_cache_service_instance: CacheService | None = None
+
+
+def get_cache_service(
+    config: IngeniousSettings = Depends(get_config),
+) -> CacheService:
+    """Get cache service instance (singleton).
+
+    Returns:
+        Cache service instance based on configuration.
+    """
+    global _cache_service_instance
+
+    if _cache_service_instance is None:
+        _cache_service_instance = create_cache_service(config.cache)
+        logger.info(
+            "Cache service initialized",
+            enabled=config.cache.enabled,
+            backend=config.cache.backend,
+        )
+
+    return _cache_service_instance
 
 
 def get_openai_service(

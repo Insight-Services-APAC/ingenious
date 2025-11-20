@@ -4,6 +4,8 @@ This test suite validates the cache service implementation including
 configuration, cache operations, and key generation utilities.
 """
 
+from typing import Any
+
 import pytest
 
 from ingenious.config.settings import CacheSettings
@@ -241,3 +243,66 @@ class TestCacheUtils:
 
         key3 = generate_template_cache_key("rev456", "template.txt")
         assert key1 != key3
+
+
+class TestCachedRetrieval:
+    """Test cached retrieval wrapper."""
+
+    @pytest.mark.asyncio
+    async def test_search_with_cache_hit(self) -> None:
+        """Test cached search with cache hit."""
+        from ingenious.services.cache import CachedRetrieval
+
+        cache = MemoryCacheService(max_size=100, default_ttl=300)
+        cached_retrieval = CachedRetrieval(cache, cache_ttl=300)
+
+        # Mock search function
+        call_count = 0
+
+        async def mock_search(query: str) -> list[dict[str, Any]]:
+            nonlocal call_count
+            call_count += 1
+            return [{"result": f"result for {query}"}]
+
+        # First call - cache miss
+        result1 = await cached_retrieval.search_with_cache(
+            mock_search, "test query", cache_key_prefix="test_search"
+        )
+        assert call_count == 1
+        assert result1 == [{"result": "result for test query"}]
+
+        # Second call - cache hit
+        result2 = await cached_retrieval.search_with_cache(
+            mock_search, "test query", cache_key_prefix="test_search"
+        )
+        assert call_count == 1  # Should not call search again
+        assert result2 == result1
+
+        await cache.close()
+
+    @pytest.mark.asyncio
+    async def test_thread_cache_invalidation(self) -> None:
+        """Test thread cache invalidation."""
+        from ingenious.services.cache import CachedRetrieval
+
+        cache = MemoryCacheService(max_size=100, default_ttl=300)
+        cached_retrieval = CachedRetrieval(cache, cache_ttl=60)
+
+        # Mock get thread function
+        async def mock_get_thread(thread_id: str) -> dict[str, Any]:
+            return {"thread_id": thread_id, "messages": ["msg1", "msg2"]}
+
+        # Get thread - cache miss
+        result1 = await cached_retrieval.get_thread_with_cache(mock_get_thread, "thread123")
+        assert result1 == {"thread_id": "thread123", "messages": ["msg1", "msg2"]}
+
+        # Verify it's cached
+        assert await cache.exists("thread:thread123:messages")
+
+        # Invalidate cache
+        await cached_retrieval.invalidate_thread_cache("thread123")
+
+        # Verify it's no longer cached
+        assert not await cache.exists("thread:thread123:messages")
+
+        await cache.close()
