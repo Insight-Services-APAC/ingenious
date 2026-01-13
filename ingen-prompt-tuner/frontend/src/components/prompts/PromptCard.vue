@@ -28,29 +28,27 @@
 <template>
   <div
     :class="[
-      'bg-white rounded-lg p-5 cursor-pointer transition-colors',
-      selected ? 'border-2 border-shiraz' : 'border border-gray-200 hover:border-shiraz/30',
+      'px-3 py-2.5 rounded-md cursor-pointer transition-all mb-1 border-l-2',
+      selected ? 'bg-shiraz/10 border-shiraz' : 'hover:bg-desert border-transparent',
     ]"
     @click="$emit('click')"
   >
-    <div class="flex items-start justify-between mb-3">
-      <div>
-        <p class="text-sm font-medium text-mine">
-          {{ prompt.filename }}
-        </p>
-        <p v-if="prompt.description" class="text-xs text-taupe mt-1">
-          {{ prompt.description }}
-        </p>
-      </div>
-      <span class="text-xs text-taupe">{{ formatSize(prompt.size) }}</span>
-    </div>
-    <div class="flex items-center gap-2">
+    <p class="text-sm font-medium text-mine truncate">
+      {{ prompt.filename }}
+    </p>
+    <p v-if="prompt.description" class="text-xs text-taupe truncate mt-0.5">
+      {{ prompt.description }}
+    </p>
+    <div v-if="prompt.tags && prompt.tags.length > 0" class="flex items-center gap-1 mt-1.5">
       <span
-        v-for="tag in prompt.tags"
+        v-for="tag in prompt.tags.slice(0, 2)"
         :key="tag"
-        class="px-2 py-0.5 text-xs bg-desert text-taupe rounded"
+        class="px-1.5 py-0.5 text-[10px] bg-desert text-taupe rounded"
       >
         {{ tag }}
+      </span>
+      <span v-if="prompt.tags.length > 2" class="text-[10px] text-taupe">
+        +{{ prompt.tags.length - 2 }}
       </span>
     </div>
   </div>

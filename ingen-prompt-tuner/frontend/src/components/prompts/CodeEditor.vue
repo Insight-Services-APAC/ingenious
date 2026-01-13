@@ -89,7 +89,7 @@
         }),
         EditorView.theme({
           '&': {
-            height: '400px',
+            height: '100%',
             fontSize: '14px',
           },
           '.cm-scroller': {
@@ -151,12 +151,18 @@
 
 <style scoped>
   .code-editor-container {
+    height: 100%;
     border-radius: 0.375rem;
     overflow: hidden;
   }
 
   .code-editor-container :deep(.cm-editor) {
+    height: 100%;
     border-radius: 0.375rem;
+  }
+
+  .code-editor-container :deep(.cm-scroller) {
+    height: 100%;
   }
 
   .code-editor-container :deep(.cm-focused) {

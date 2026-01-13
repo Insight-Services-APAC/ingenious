@@ -56,9 +56,10 @@
 <template>
   <div
     v-if="editorStore.selectedPrompt"
-    class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+    class="bg-white rounded-lg border border-gray-200 flex flex-col h-full overflow-hidden"
   >
-    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 flex-shrink-0">
       <div class="flex items-center gap-3">
         <span class="text-sm font-medium text-mine">{{ editorStore.selectedPrompt.filename }}</span>
         <span class="text-xs text-taupe">Last modified 2 hours ago</span>
@@ -77,14 +78,17 @@
       </div>
     </div>
 
-    <div class="editor-wrapper">
+    <!-- Editor (fills remaining space) -->
+    <div class="flex-1 min-h-0">
       <CodeEditor
+        class="h-full"
         :model-value="editorStore.modifiedContent || ''"
         @update:model-value="handleEditorChange"
       />
     </div>
 
-    <div class="px-5 py-3 border-t border-gray-200 flex items-center gap-2 flex-wrap">
+    <!-- Footer -->
+    <div class="px-5 py-3 border-t border-gray-200 flex items-center gap-2 flex-wrap flex-shrink-0">
       <span class="text-xs text-taupe">Variables:</span>
       <span
         v-for="variable in editorStore.extractedVariables"
