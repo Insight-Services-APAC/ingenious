@@ -1,25 +1,53 @@
-# Refactor Using Complexity Analysis (ESLint Complexity Rules)
+# Refactor Using Complexity Analysis
 
-Use ESLint complexity rules to identify high-complexity functions and refactor them safely.
+Use ESLint complexity rules to identify and refactor high-complexity functions.
 
-## 1. Run Complexity Analysis
+## When to Use
+
+- When code is difficult to understand or modify
+- Before major feature additions
+- To improve code quality metrics
+
+## Arguments
+
+Usage: `/complexity [target] [--threshold number]`
+
+- `target` - Directory or file to analyze (default: auto-detect JS/TS directories)
+- `--threshold` - Maximum complexity allowed (default: 10)
+
+If `$ARGUMENTS` is provided, use it as the target path.
+
+## Prerequisites
+
+- ESLint configured in the project
+
+## Steps
+
+### 1. Find JavaScript/TypeScript Source Directories
 
 ```bash
-# Check cyclomatic complexity with ESLint
-npx eslint resources/js/ --ext .js,.ts,.vue --rule 'complexity: ["warn", 10]'
+# Find directories with JS/TS files
+find . -name "*.ts" -o -name "*.js" -o -name "*.vue" | grep -v node_modules | head -20
 ```
 
-## 2. Identify Hotspots
+### 2. Run Complexity Analysis
+
+```bash
+# Check cyclomatic complexity
+npx eslint . --ext .js,.ts,.vue --rule 'complexity: ["warn", 10]'
+```
+
+### 3. Identify Hotspots
 
 Target functions with:
 - Cyclomatic complexity > 10
 - Many branches (if/else, switch)
-- Deep nesting levels
+- Deep nesting levels (> 3)
 - High cognitive complexity
 
-## 3. Configure ESLint Rules
+### 4. Configure ESLint Rules
 
-Add to `.eslintrc.js`:
+Add to ESLint config:
 ```javascript
 {
   rules: {
@@ -31,16 +59,18 @@ Add to `.eslintrc.js`:
 }
 ```
 
-## 4. Refactor Tactics (Apply One At A Time)
+### 5. Refactor Tactics
 
-- Extract function for cohesive logic blocks
-- Replace conditionals with early returns (guard clauses)
-- Use object lookup maps instead of switch statements
-- Replace nested callbacks with async/await
-- Decompose large functions by responsibility
-- Extract complex conditions into named functions
-- Use strategy pattern for variant behavior
-- Split components with multiple concerns
+Apply one tactic at a time:
+
+- **Extract function** for cohesive logic blocks
+- **Guard clauses** replace nested conditionals with early returns
+- **Object lookup maps** replace switch statements
+- **async/await** replace nested callbacks
+- **Decompose by responsibility** split large functions
+- **Named predicates** extract complex conditions into functions
+- **Strategy pattern** for variant behavior
+- **Split components** with multiple concerns
 
 After each change:
 ```bash
@@ -54,16 +84,16 @@ git add <files>
 git commit -m "refactor(complexity): reduce complexity in <function>"
 ```
 
-## 5. Validate No Regression
+### 6. Validate No Regression
 
 When a file is improved:
 ```bash
-npx eslint resources/js/ --ext .js,.ts,.vue
+npx eslint . --ext .js,.ts,.vue
 npm test
-npm run build:check
+npm run build 2>/dev/null || npm run build:check 2>/dev/null || true
 ```
 
-## 6. Avoid Over-Refactoring
+### 7. Know When to Stop
 
 Stop when:
 - Complexity <= 10
@@ -71,12 +101,17 @@ Stop when:
 - Function length reasonable
 - Further splitting reduces readability
 
-## 7. Final Quality Gate
+## Error Handling
 
-```bash
-npx eslint resources/js/ --ext .js,.ts,.vue
-npm run build:check
-npm test
-```
+| Issue | Cause | Resolution |
+|-------|-------|------------|
+| Tests fail after refactor | Behavior changed | Revert, write more tests first |
+| Complexity stays high | Algorithm inherently complex | Document, add tests, accept |
+| Type errors after split | Context lost | Ensure proper typing on extracted functions |
 
-Goal: No functions with cyclomatic complexity above 10.
+## Success Criteria
+
+- No functions with cyclomatic complexity > 10
+- Max nesting depth <= 4
+- All tests pass
+- Code is more readable

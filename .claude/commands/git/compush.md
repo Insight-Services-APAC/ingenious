@@ -1,138 +1,138 @@
-# Prompt: Generate, Commit, and Push with Git
+# Commit and Push
 
-## Instructions
+Generate commit message, commit changes, and push to remote.
 
-1. **Security Check: Scan for secrets using static analysis**
-    - **CRITICAL**: Before committing, run a static analysis tool to detect secrets:
+## When to Use
 
-    **Option A: detect-secrets (recommended)**
-    ```bash
-    # Install if needed: pip install detect-secrets
-    # Scan staged files for secrets
-    git diff --cached --name-only | xargs detect-secrets scan --list-all-secrets
-    ```
+- After completing a unit of work
+- Before switching branches
+- To save progress to remote
 
-    **Option B: gitleaks**
-    ```bash
-    # Install if needed: brew install gitleaks (macOS) or download from GitHub
-    # Scan staged changes
-    gitleaks detect --staged --verbose
-    ```
+## Arguments
 
-    **Option C: trufflehog**
-    ```bash
-    # Install if needed: brew install trufflehog (macOS)
-    # Scan staged changes
-    git diff --cached | trufflehog --json filesystem --staged
-    ```
+Usage: `/compush [files] [--message "msg"]`
 
-    - The tool will detect:
-      - API keys, tokens, passwords
-      - Private keys, certificates
-      - Connection strings, database credentials
-      - AWS/Azure/GCP credentials
-      - High-entropy strings that may be secrets
-    - **If secrets are found**: Remove them immediately, use environment variables or secret management instead
-    - **NEVER commit or push files containing secrets**
-    - For false positives, add to `.secrets.baseline` (detect-secrets) or `.gitleaksignore` (gitleaks)
+- `files` - Specific files to commit (default: all changes)
+- `--message` - Optional commit message override
 
-2. **Assess the scope of changes**
-    - If there are extensive changes, break them into logical groups
-    - Each commit should represent a cohesive set of related changes
-    - Consider grouping by: feature, bug fix, refactoring, documentation, tests
+If `$ARGUMENTS` is provided, use it as files to commit or message.
 
-3. **Write a commit message using Conventional Commits format**
-    - Use the format: `<type>(<scope>): <description>`
-    - **Types** (required):
-      - `feat`: New feature or functionality
-      - `fix`: Bug fix
-      - `docs`: Documentation changes only
-      - `style`: Code style changes (formatting, whitespace)
-      - `refactor`: Code refactoring without behavior change
-      - `perf`: Performance improvements
-      - `test`: Adding or modifying tests
-      - `chore`: Build process, dependencies, or tooling changes
-      - `security`: Security-related changes
-      - `ci`: CI/CD configuration changes
-    - **Scope** (optional): Component or module affected (e.g., `auth`, `api`, `db`)
-    - **Description**: Use imperative mood, keep under 50 characters
-    - Keep the full first line under 72 characters
-    - **NEVER include emojis in commit messages**
-    - **Maintain a concise, professional tone**
-    - **DO NOT add attribution footers** (e.g., no "Generated with Claude Code" or "Co-Authored-By: Claude")
+## Steps
 
-    **Examples:**
-    ```
-    feat(auth): add JWT token refresh endpoint
-    fix(db): resolve connection pool exhaustion
-    refactor(api): simplify request validation logic
-    docs: update API endpoint documentation
-    chore(deps): upgrade FastAPI to 0.110.0
-    security(auth): sanitize user input in login
-    ```
+### 1. Security Check
 
-4. **Commit your changes**
-    - For small changes:
-      ```sh
-      git add .
-      git commit -m "<your commit message>"
-      ```
-    - For extensive changes, commit incrementally:
-      ```sh
-      git add <specific files or directories>
-      git commit -m "<specific commit message>"
-      # Repeat for each logical group
-      ```
+**Scan for secrets before committing:**
 
-5. **Push your commits to the remote repository**
-    ```sh
-    git push
-    ```
+```bash
+# Option A: detect-secrets (recommended)
+git diff --cached --name-only | xargs detect-secrets scan --list-all-secrets 2>/dev/null
 
-## Examples
+# Option B: gitleaks
+gitleaks detect --staged --verbose 2>/dev/null
 
-### Single Commit (Small Changes)
-1. **Commit message:**
-    ```
-    feat(auth): add user authentication to login endpoint
-    ```
+# Option C: trufflehog
+git diff --cached | trufflehog filesystem --staged 2>/dev/null
+```
 
-2. **Commands:**
-    ```sh
-    git add .
-    git commit -m "feat(auth): add user authentication to login endpoint"
-    git push
-    ```
+**If secrets found:**
+- Remove them immediately
+- Use environment variables or secret management
+- **NEVER commit files containing secrets**
 
-### Multiple Commits (Extensive Changes)
-1. **Incremental commits:**
-    ```sh
-    # Commit core functionality first
-    git add src/auth/
-    git commit -m "feat(auth): add authentication service and middleware"
+For false positives, add to `.secrets.baseline` or `.gitleaksignore`.
 
-    # Commit tests separately
-    git add tests/auth/
-    git commit -m "test(auth): add authentication unit tests"
+### 2. Assess Change Scope
 
-    # Commit documentation
-    git add docs/auth.md
-    git commit -m "docs(auth): add authentication documentation"
+Review the changes:
+```bash
+git status
+git diff --cached --stat
+```
 
-    # Push all commits
-    git push
-    ```
+If extensive changes exist:
+- Break into logical groups
+- Each commit should be cohesive
+- Group by: feature, bug fix, refactoring, docs, tests
 
-### Bug Fix Example
-```sh
+### 3. Write Commit Message
+
+Use **Conventional Commits** format: `<type>(<scope>): <description>`
+
+**Types:**
+| Type | Use For |
+|------|---------|
+| `feat` | New feature or functionality |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, whitespace |
+| `refactor` | Code change without behavior change |
+| `perf` | Performance improvement |
+| `test` | Adding or modifying tests |
+| `chore` | Build, dependencies, tooling |
+| `security` | Security-related changes |
+| `ci` | CI/CD configuration |
+
+**Rules:**
+- Scope (optional): Component affected (e.g., `auth`, `api`, `db`)
+- Description: Imperative mood, under 50 characters
+- Full first line under 72 characters
+- No emojis
+- No attribution footers
+
+**Examples:**
+```
+feat(auth): add JWT token refresh endpoint
+fix(db): resolve connection pool exhaustion
+refactor(api): simplify request validation logic
+docs: update API endpoint documentation
+chore(deps): upgrade FastAPI to 0.110.0
+```
+
+### 4. Commit Changes
+
+**Single commit (small changes):**
+```bash
 git add .
-git commit -m "fix(api): resolve null pointer in request handler"
+git commit -m "<type>(<scope>): <description>"
+```
+
+**Multiple commits (extensive changes):**
+```bash
+# Core functionality
+git add src/feature/
+git commit -m "feat(feature): add core implementation"
+
+# Tests
+git add tests/
+git commit -m "test(feature): add unit tests"
+
+# Documentation
+git add docs/
+git commit -m "docs(feature): add usage documentation"
+```
+
+### 5. Push to Remote
+
+```bash
 git push
 ```
 
-### Refactoring Example
-```sh
-git add .
-git commit -m "refactor(db): extract query builder into separate module"
-git push
+If branch is new:
+```bash
+git push -u origin <branch-name>
 ```
+
+## Error Handling
+
+| Issue | Cause | Resolution |
+|-------|-------|------------|
+| Pre-commit hook fails | Code style issues | Fix issues, re-stage, commit again |
+| Push rejected | Remote has new commits | Pull first, resolve conflicts, push |
+| Secrets detected | Sensitive data in commit | Remove secrets, use env vars |
+
+## Success Criteria
+
+- Security scan passes (no secrets)
+- Commit message follows Conventional Commits
+- Changes logically grouped
+- Push successful

@@ -1,1 +1,0 @@
-Remove all emojis from this codebase.

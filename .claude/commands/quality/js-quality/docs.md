@@ -1,27 +1,55 @@
-# Verify and Fix JSDoc Comments with ESLint
+# Verify and Fix JSDoc Comments
 
-Use ESLint JSDoc plugin to ensure all functions, classes, and modules have proper, consistent documentation.
+Use ESLint JSDoc plugin to ensure all functions, classes, and modules have proper documentation.
 
-## CRITICAL: Persistence Requirement
+## When to Use
+
+- When documentation coverage is low
+- Before major releases
+- When onboarding documentation is needed
+
+## Arguments
+
+Usage: `/jsdoc [target]`
+
+- `target` - Directory or file to check (default: auto-detect JS/TS directories)
+
+If `$ARGUMENTS` is provided, use it as the target path.
+
+## Prerequisites
+
+- ESLint configured
+- eslint-plugin-jsdoc: `npm install -D eslint-plugin-jsdoc`
+
+## Persistence Requirement
 
 **DO NOT STOP until ALL JSDoc issues are resolved.** This task requires complete coverage:
 - Process every single file reported by the tools
 - Fix every missing or malformed JSDoc comment
 - Continue working through all modules systematically
-- Re-run the analysis tools after each batch of fixes to confirm progress
-- Only consider this task complete when ESLint reports zero JSDoc violations
+- Re-run the analysis tools after each batch of fixes
+- Only consider complete when ESLint reports zero JSDoc violations
 
-If context window limits approach, document remaining files in the todo list and continue in the next session. Do not leave the codebase in a partially documented state.
+If context window limits approach, document remaining files in the todo list.
 
-## 1. Install JSDoc Plugin (if missing)
+## Steps
+
+### 1. Find JavaScript/TypeScript Source Directories
+
+```bash
+# Find directories with JS/TS files
+find . -name "*.ts" -o -name "*.js" -o -name "*.vue" | grep -v node_modules | head -20
+```
+
+### 2. Install JSDoc Plugin (if missing)
 
 ```bash
 npm install -D eslint-plugin-jsdoc
 ```
 
-## 2. Configure ESLint
+### 3. Configure ESLint
 
-Add to `.eslintrc.js`:
+Add to ESLint config:
 ```javascript
 {
   plugins: ['jsdoc'],
@@ -43,13 +71,13 @@ Add to `.eslintrc.js`:
 }
 ```
 
-## 3. Run JSDoc Analysis
+### 4. Run JSDoc Analysis
 
 ```bash
-npx eslint resources/js/ --ext .js,.ts,.vue --rule 'jsdoc/require-jsdoc: warn'
+npx eslint . --ext .js,.ts,.vue --rule 'jsdoc/require-jsdoc: warn'
 ```
 
-## 4. JSDoc Standards
+### 5. JSDoc Standards
 
 Use consistent JSDoc format:
 
@@ -96,49 +124,49 @@ class ClassName {
 }
 ```
 
-## 5. Processing Order
+### 6. Processing Order
 
 Work through files systematically:
-1. Start with public API functions and classes
-2. Then complex functions in components
-3. Then store actions and getters
-4. Then utility functions and helpers
-5. Finally, internal/private functions
+1. Public API functions and classes
+2. Complex functions in components
+3. Store actions and getters
+4. Utility functions and helpers
+5. Internal/private functions
 
-**Document everything.** Even simple functions benefit from a one-line description.
-
-## 6. Fix Iteratively
+### 7. Fix Iteratively
 
 For each file with issues:
 1. Add missing JSDoc comments
-2. Fix style violations reported by ESLint
+2. Fix style violations
 3. Verify changes:
    ```bash
    npx eslint <file> --ext .ts,.vue
    ```
-4. Commit when a file passes:
+4. Commit when passing:
    ```bash
    git add <file>
    git commit -m "docs(<module>): add JSDoc to <file>"
    ```
 
-## 7. Validate Coverage Improvement
+### 8. Validate Coverage Improvement
 
-After each batch of fixes:
+After each batch:
 ```bash
-npx eslint resources/js/ --ext .js,.ts,.vue
-```
-
-Continue fixing until zero JSDoc violations. Then run tests:
-```bash
+npx eslint . --ext .js,.ts,.vue
 npm test
 ```
 
-## Completion Criteria
+## Error Handling
 
-This task is NOT complete until:
-1. `npx eslint resources/js/ --ext .js,.ts,.vue` reports zero JSDoc violations
-2. All public functions have JSDoc comments
-3. All tests pass
+| Issue | Cause | Resolution |
+|-------|-------|------------|
+| TypeScript conflicts | JSDoc types vs TS types | Use `plugin:jsdoc/recommended-typescript` |
+| Too many warnings | Large codebase | Process file by file |
+| Vue SFC issues | Component structure | Focus on script section |
 
-**Do not stop early. Do not skip files. Process the entire codebase.**
+## Success Criteria
+
+- Zero JSDoc ESLint violations
+- All public functions have JSDoc comments
+- All tests pass
+- Documentation follows consistent style

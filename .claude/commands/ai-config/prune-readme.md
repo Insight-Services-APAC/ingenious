@@ -1,29 +1,31 @@
 # Prune README.md
 
-Reduce README.md to essential information for developer onboarding. Target: concise, scannable, actionable.
+Reduce README.md to essential information for developer onboarding.
 
-## Principles for Pruning
+## When to Use
 
-Keep information that:
-- **Enables quick start** (clone, install, run in under 5 minutes)
-- **Explains the purpose** (what this project does, one paragraph max)
-- **Shows usage** (basic examples, common commands)
-- **Points to more info** (links to detailed docs, not duplicated content)
+- When README.md is too long
+- When important info is buried in text
+- During documentation cleanup
 
-Remove information that:
-- Duplicates information available elsewhere (package.json scripts, inline code comments)
-- Is obvious from the code or file structure
-- Contains excessive examples when one suffices
-- Includes outdated badges or status indicators
-- Has verbose explanations that could be one-liners
+## Arguments
 
-## Step 1: Analyze Current Size
+Usage: `/prune-readme [readme-path] [--target-lines number]`
+
+- `readme-path` - Path to README.md file (default: ./README.md)
+- `--target-lines` - Target line count (default: 100 simple, 200 complex)
+
+If `$ARGUMENTS` is provided, use it as the file path or target.
+
+## Steps
+
+### 1. Analyze Current Size
 
 ```bash
 wc -l README.md
 ```
 
-## Step 2: Categorize Content by Priority
+### 2. Categorize Content by Priority
 
 **Priority 1 - Must Keep:**
 - Project name and one-line description
@@ -44,18 +46,33 @@ wc -l README.md
 - Verbose feature lists
 - Screenshots that don't aid understanding
 
-## Step 3: Apply Compression Techniques
+### 3. Principles for Pruning
+
+**Keep information that:**
+- Enables quick start (clone, install, run in under 5 minutes)
+- Explains the purpose (one paragraph max)
+- Shows basic usage
+- Points to more info (links, not duplicated content)
+
+**Remove information that:**
+- Duplicates info elsewhere (package.json scripts, inline comments)
+- Is obvious from code or file structure
+- Contains excessive examples when one suffices
+- Includes outdated badges or status indicators
+- Has verbose explanations that could be one-liners
+
+### 4. Apply Compression Techniques
 
 1. **Use tables** for option/config documentation
 2. **Single code block** for install + run (copy-paste friendly)
-3. **Link to docs** instead of duplicating documentation
-4. **Remove badges** that don't provide useful information
+3. **Link to docs** instead of duplicating
+4. **Remove badges** that don't provide useful info
 5. **Collapse optional sections** using details/summary if supported
 
-## Step 4: Restructure for Scanning
+### 5. Restructure for Scanning
 
 Optimal README structure:
-```
+```markdown
 # Project Name
 One-line description
 
@@ -75,16 +92,31 @@ Links to detailed docs
 One line
 ```
 
-## Step 5: Validate Final Size
+### 6. Validate Final Size
 
 ```bash
 wc -l README.md
 ```
 
-Target: Under 100 lines for simple projects, under 200 for complex ones.
+Target: Under 100 lines (simple), under 200 (complex).
 
-## Step 6: Test Effectiveness
+### 7. Test Effectiveness
 
-Ask: "Could a new developer go from clone to running in 5 minutes with only this README?"
+Ask: "Could a new developer go from clone to running in 5 minutes?"
 - If yes, pruning is complete
-- If no, add back the minimum needed steps
+- If no, add back minimum needed steps
+
+## Error Handling
+
+| Issue | Cause | Resolution |
+|-------|-------|------------|
+| Missing critical steps | Over-pruning | Test fresh clone, restore needed info |
+| Still confusing | Poor organization | Restructure, use headers |
+| Lost context | Removed too much explanation | Add brief clarifications |
+
+## Success Criteria
+
+- README under target line count
+- New developer can get running quickly
+- No redundant information
+- Clear, scannable structure

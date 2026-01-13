@@ -1,1 +1,0 @@
-write a comprehensive file in markdown listing down comprehensive user stories to for an agent to test. name this file spec.md. Focus only on user stories that can be tested with Playwright MCP. Make sure to document all existing features in the app found in the codebase. DO NOT add any user stories that are not found in this codebase.

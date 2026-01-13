@@ -2,53 +2,112 @@
 
 Audit CLAUDE.md to ensure it accurately reflects the current state of the codebase.
 
-## Step 1: Read Current CLAUDE.md
+## When to Use
 
-Read and understand all instructions currently in CLAUDE.md.
+- After significant codebase changes
+- When onboarding to a new project
+- During periodic documentation reviews
 
-## Step 2: Verify Each Section Against Reality
+## Arguments
 
-For each section or instruction in CLAUDE.md:
+Usage: `/verify-claude-md [claude-md-path]`
 
-1. **Repository Context** - Verify the description matches actual project purpose and structure
-2. **Package Management** - Check if the specified package manager (uv, npm, pip, etc.) is actually used
-   ```bash
-   ls pyproject.toml uv.lock package.json pnpm-lock.yaml yarn.lock 2>/dev/null
-   ```
-3. **Build/Run Commands** - Test that documented commands actually work
-4. **File Structure** - Verify any documented paths or directories exist
-5. **Dependencies** - Check if mentioned tools/libraries are in dependency files
-6. **Configuration** - Verify any documented config files exist and match descriptions
+- `claude-md-path` - Path to CLAUDE.md file (default: ./CLAUDE.md)
 
-## Step 3: Scan Codebase for Missing Context
+If `$ARGUMENTS` is provided, use it as the file path.
 
-Identify important aspects not documented in CLAUDE.md:
+## Steps
 
-1. **Entry Points** - Main files, scripts, or commands to run the application
-2. **Testing** - How to run tests, test frameworks used
-3. **Environment Setup** - Required environment variables, .env files
-4. **Key Patterns** - Architectural patterns, coding conventions used consistently
-5. **External Services** - APIs, databases, or services the code interacts with
+### 1. Read Current CLAUDE.md
 
-## Step 4: Check for Outdated Information
+Read and understand all instructions in the CLAUDE.md file.
+
+### 2. Verify Each Section
+
+**Repository Context:**
+- Does the description match actual project purpose?
+- Is the project structure accurate?
+
+**Package Management:**
+```bash
+# Check which package manager is used
+ls pyproject.toml uv.lock package.json pnpm-lock.yaml yarn.lock requirements.txt 2>/dev/null
+```
+
+**Build/Run Commands:**
+- Test each documented command
+- Verify they execute successfully
+
+**File Structure:**
+- Check that documented paths exist
+- Verify directory structure matches description
+
+**Dependencies:**
+- Confirm mentioned tools are in dependency files
+- Check version requirements are current
+
+**Configuration:**
+- Verify config files exist
+- Check that documented settings match actual files
+
+### 3. Scan for Missing Context
+
+Identify important aspects not documented:
+
+**Entry Points:**
+- Main files, scripts, or commands
+- How to run the application
+
+**Testing:**
+- How to run tests
+- Test frameworks used
+
+**Environment Setup:**
+- Required environment variables
+- .env file requirements
+
+**Key Patterns:**
+- Architectural patterns used
+- Coding conventions
+
+**External Services:**
+- APIs, databases, or services used
+
+### 4. Check for Outdated Information
 
 Look for:
 - References to deleted files or directories
 - Deprecated commands or workflows
-- Old dependency versions or removed packages
+- Old dependency versions
 - Obsolete configuration instructions
 
-## Step 5: Update CLAUDE.md
+### 5. Update CLAUDE.md
 
 Fix any inaccuracies found:
-- Remove outdated or incorrect information
+- Remove outdated information
 - Add missing critical context
-- Update commands that have changed
-- Correct file paths or directory structures
+- Update changed commands
+- Correct file paths
 
-## Step 6: Validate Changes
+### 6. Validate Changes
 
 After updates, verify:
 - All documented commands execute successfully
 - All referenced paths exist
 - Instructions are clear and actionable
+
+## Error Handling
+
+| Issue | Cause | Resolution |
+|-------|-------|------------|
+| Command fails | Outdated or wrong command | Update to correct command |
+| Path not found | File moved or deleted | Update path or remove reference |
+| Missing context | Documentation gap | Add necessary information |
+
+## Success Criteria
+
+- All documented commands work
+- All referenced paths exist
+- No outdated information remains
+- Missing critical context added
+- CLAUDE.md accurately reflects codebase
