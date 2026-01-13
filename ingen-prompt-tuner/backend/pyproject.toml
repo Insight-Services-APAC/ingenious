@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Ingen Prompt Tuner - AI orchestration backend hosting Ingenious agent flows"
 requires-python = ">=3.13"
 dependencies = [
-    "fastapi>=0.128.0",
+    "ingenious[ai,azure]>=0.2.8", # Ingenious agent framework with AI/AutoGen and Azure support - listed first to let it set fastapi version
     "uvicorn[standard]>=0.35.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
@@ -12,10 +12,8 @@ dependencies = [
     "bcrypt>=4.0.0",
     "httpx>=0.27.0",
     "python-dotenv>=1.0.0", # Load .env files
-    "ingenious[ai,azure]>=0.2.8", # Ingenious agent framework with AI/AutoGen and Azure support
     "azure-cosmos>=4.14.3",
     "jinja2>=3.1.6",
-    "starlette>=0.49.1",  # CVE fix: GHSA-2c2j-9gv5-cj73, GHSA-7f5h-v6xp-fcq8
     "urllib3>=2.6.3",  # CVE fix: GHSA-gm62-xv2j-4w53, GHSA-2xpw-w6gg-jr37, GHSA-38jv-5279-wg99
     "filelock>=3.20.1",  # CVE fix: GHSA-w853-jp5j-5j7f
 ]

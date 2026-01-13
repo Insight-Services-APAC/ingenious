@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir .
 
 EXPOSE 8002
 
-CMD ["uvicorn", "prompt_tuner.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["uvicorn", "ingen_prompt_tuner.main:app", "--host", "0.0.0.0", "--port", "8002"]
